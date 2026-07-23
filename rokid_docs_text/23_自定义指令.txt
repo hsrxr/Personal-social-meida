@@ -1,0 +1,36 @@
+# iOS：自定义指令
+
+## 概述
+
+在手机与眼镜端应用之间发送 **业务自定义消息**（命令字 + 二进制载荷）。iOS SDK 提供 `sendCustomCmd` 与 **眼镜端上行 notify** 的订阅能力；**仅建议在 customApp（与 Android `CUSTOMAPP` 等价）模式下使用**。
+
+## 使用前提
+
+  - 已建立 **customApp** 会话且 **眼镜端会话已构建**（例如 `openApp` 已成功，应用处于可交互/约定 `pageName` 页面；详见 SDK 发行说明）。**不得在仅链路连通、应用尚未拉起时发送自定义指令。**
+  - 眼镜端 APK 实现与手机端约定的 **cmd / subCmd / payload** 协议，并对需要回调的路径回复 **response**（否则带 callback 的重载可能收不到结果）。
+
+## 手机端 → 眼镜端
+
+func sendCustomCmd(cmd: String, payload: Data?)
+
+  - `cmd`：命令名字符串。
+  - `payload`：可选二进制数据（传输层可能以 Base64 等形式编码，由 SDK 处理）。
+
+带完成回调的重载：
+
+func sendCustomCmd(cmd: String, payload: Data?, callback: ((_ success: Bool, _ payload: Data?, _ errorCode: Int32?, _ errorMsg: String?) -&gt; Void)?)
+
+约束
+
+  - **禁止**在 customView 会话下滥用发送接口；与 Android `CUSTOMVIEW` 下不可进行 `sendCustomCmd` 的产品约束一致。
+  - 发送频率与包体大小需与眼镜端处理能力匹配，建议加队列与超时重试。
+
+与 Android 的对应
+
+| Android                                | iOS                           |
+| -------------------------------------- | ----------------------------- |
+| `sendCustomCmd(key, Caps.serialize())` | `sendCustomCmd(cmd:payload:)` |
+| `ICustomCmdCbk.onCustomCmdResult`      | `sendCustomCmd` 的 callback    |
+
+Sample 说明
+部分历史 Demo **未单独拆分「自定义指令」页面**，而是在主 `ViewController` 中嵌入按钮与日志；请以 **ios_cxr_l_sample** 实际代码为准补全「Sample 入口」表。

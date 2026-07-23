@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "skills": {
+    "bet-sizing": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/bet-sizing/SKILL.md",
+      "computedHash": "8a893c06ebae8dbf7c83befeeca97e26da1345d5d9e2262b65b22d7ac2bcb99f"
+    },
+    "competitor-analysis": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/competitor-analysis/SKILL.md",
+      "computedHash": "5d9ee1a9940737f9f01f2d46c0da08a5d6dbcdcf5f386b0668ca2e9eb3463d4d"
+    },
+    "experiment-design": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/experiment-design/SKILL.md",
+      "computedHash": "42c30c196b0c2f6b39a0218692a291a5a0b2ba1196403915279c0c3459eab6fa"
+    },
+    "feature-prioritization": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/feature-prioritization/SKILL.md",
+      "computedHash": "985de377466ee4faea81566f318fa4e7fcaca52ad80d72618c14a5ea46c57143"
+    },
+    "jtbd-analysis": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/jtbd-analysis/SKILL.md",
+      "computedHash": "e18a1f605e1f2a84471e3781ee58c629fd09a18187e2dd9276a1f881ef6d7e72"
+    },
+    "launch-plan": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/launch-plan/SKILL.md",
+      "computedHash": "018c400652f558f7194997fa60fc37bdd46aefdf351fbde64cf6f7e1875b036c"
+    },
+    "metrics-framework": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/metrics-framework/SKILL.md",
+      "computedHash": "378cd7ac97196287211b18671fcefdd021a6a9e900c2f0d6d8f28909a3ade942"
+    },
+    "opportunity-mapping": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/opportunity-mapping/SKILL.md",
+      "computedHash": "3000f9688e7170a1e786fc8c10a3ba4b1c9015d2426e2d297c27702deec08bec"
+    },
+    "prd-writing": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/prd-writing/SKILL.md",
+      "computedHash": "8c87eb87281955892fb6123526f4d665c71824f7cae827e933c4fea4dab383de"
+    },
+    "problem-validation": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/problem-validation/SKILL.md",
+      "computedHash": "277e71d3f899c1f47020568da43c5ae8c93f7528a86f9ca778faa75d27d7d3b8"
+    },
+    "product-positioning": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/product-positioning/SKILL.md",
+      "computedHash": "a9627a84cdca0e2eb3f456d369d64dc23a8357e4ae031565e79a629a0a6f3a5b"
+    },
+    "research-synthesis": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/research-synthesis/SKILL.md",
+      "computedHash": "ebf9c601313a12f599d9275c943d959b2741ce2deae26f152e4fd2ca547bd985"
+    },
+    "roadmap-planning": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/roadmap-planning/SKILL.md",
+      "computedHash": "9c2a7f436a9a5adb28fd4d2852f5b3a83bd8e1b83c06b71cf6f986a3f407075b"
+    },
+    "scope-cutting": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/scope-cutting/SKILL.md",
+      "computedHash": "bf37709532e44726bbe3cbd910042c0b4c4737f18016a04736e2b41668bb8058"
+    },
+    "strategy-doc": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/strategy-doc/SKILL.md",
+      "computedHash": "81b2c0895337633545d986df789352f76ef535775947be90e177305b71931119"
+    },
+    "user-interview": {
+      "source": "assimovt/productskills",
+      "sourceType": "github",
+      "skillPath": "skills/user-interview/SKILL.md",
+      "computedHash": "414a559dd11396044946012735788a6a2efa000d2af52f1834ce94d6b613aceb"
+    }
+  }
+}

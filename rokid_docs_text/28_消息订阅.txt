@@ -1,0 +1,99 @@
+CXR-S SDK 提供两种消息订阅模式，允许眼镜端应用接收来自移动设备的消息：
+
+  1. **普通消息订阅**：单向接收消息
+  2. **可回复消息订阅**：接收消息并可发送响应
+
+# 1 普通消息订阅
+
+开发者可通过 CXR-S SDK 的 `subscribe(String name, MsgCallback cb)` 方法订阅眼镜端消息。当移动端发送消息时，SDK 会通过 `MsgCallback` 接口的 `onReceive(String name, Caps args, byte[] data)` 回调通知开发者，其中包含消息名称、结构化参数（Caps）及二进制数据（可选）
+
+## 1.1 订阅方法
+
+int subscribe(String name, MsgCallback cb)
+
+**参数**：
+
+  - `name`：要订阅的消息名称（需与移动端发送的消息名称一致）
+  - `cb`：消息回调接口实现
+
+**返回值**：
+
+  - `0`：订阅成功
+  - `-1`：参数错误
+  - `-2`：重复订阅
+
+## 1.2 回调接口
+
+interface MsgCallback {
+    void onReceive(String name, Caps args, byte[] value);
+}
+
+**回调参数**：
+
+  - `name`：消息名称
+  - `args`：消息参数（Caps 格式）
+  - `value`：附加二进制数据，可能为空
+
+## 1.3 示例代码
+
+private val cxrBridge = CXRServiceBridge()
+//实现回调接口
+private val msgCallback = object : CXRServiceBridge.MsgCallback {
+    override fun onReceive(name: String, args: Caps, value: ByteArray?) {
+       Log.i(&quot;MessageSubscribe&quot;, &quot;Received name: $name ,args: ${args.size()} , value: ${value} &quot;)
+    }
+}
+
+//调用subscribe，订阅普通消息
+cxrBridge.subscribe(&quot;glass_test&quot;, msgCallback)
+
+2 可回复消息订阅
+开发者可通过 CXR-S SDK 的 `subscribe(String name, MsgReplyCallback cb)` 方法订阅支持回复的消息。当移动端发送消息时，SDK 将通过 `MsgReplyCallback` 接口的 `onReceive(String name, Caps args, byte[] value, Reply reply)` 回调通知开发者
+
+## 2.1 订阅方法
+
+int subscribe(String name, MsgReplyCallback cb)
+
+**参数说明**：
+
+  - `name`：要订阅的消息名称（需与移动端约定一致）
+  - `cb`：实现 `MsgReplyCallback` 接口的实例
+
+**返回值**：
+
+  - `0`：订阅成功
+  - `-1`：参数错误
+  - `-2`：重复订阅
+
+## 2.2 回调接口
+
+interface MsgReplyCallback {
+    void onReceive(String name, Caps args, byte[] value, Reply reply);
+}
+
+**回调参数**：
+
+  - `name`：消息名称
+  - `args`：结构化参数（Caps 格式）
+  - `value`：可选二进制数据，可能为空
+  - `reply`：用于向移动端发送响应的 Reply 对象
+
+开发者可通过 `reply.end(Caps ret)` 方法返回响应数据
+
+## 2.3 示例代码
+
+private val cxrBridge = CXRServiceBridge()
+//实现回调接口
+public val replyCallback= object :CXRServiceBridge.MsgReplyCallback {
+    override fun onReceive(name: String, args: Caps, value: ByteArray?, reply: Reply?) {
+        //接收消息
+        Log.d(&quot;MessageSubscribe&quot;, &quot;Received name: $name ,args: ${args.size()} , value: ${value} &quot;)
+        //构造回复消息
+        val args = Caps()
+        args.write(&quot;Received Message and Reply &quot;)
+        //回复消息
+        reply?.end( args)
+    }
+}
+//调用subscribe，订阅普通消息
+cxrBridge.subscribe(&quot;glass_test&quot;, replyCallback)

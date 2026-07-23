@@ -1,0 +1,97 @@
+CXR-S SDK 提供两种消息发送方法，允许眼镜端应用向连接的移动设备发送数据：
+
+  1. **基础消息发送**：发送结构化数据（Caps格式）
+  2. **二进制消息发送**：发送结构化数据+二进制内容
+
+# 1 基础消息发送
+
+## 1.1 接口定义
+
+int sendMessage(String name, Caps args);
+
+**参数说明**：
+
+  - `name`：消息名称（需与移动端约定一致）
+  - `args`：结构化消息参数（Caps对象）
+
+**返回值**：
+
+  - `0`：发送成功
+  - `-1`：参数错误
+  - `-3`：内部错误
+
+## 1.2 示例代码
+
+//  CXRServiceBridge 已初始化并可用
+val cxrServiceBridge = CXRServiceBridge()
+ 
+fun sendExampleMessage() {
+    // 1. 创建 Caps 对象并填充数据
+    val args = Caps()
+    args.write(&quot;send_message&quot;)  // 写入字符串消息
+    args.writeUInt32(5)        // 写入一个无符号32位整数参数（示例值）
+ 
+    // 2. 调用 sendMessage 发送消息（简化版接口）
+    val result = cxrServiceBridge.sendMessage(
+        &quot;message_channel&quot;,  // 消息通道名称（根据实际协议定义）
+        args                // 参数对象
+    )
+ 
+    // 3. 处理发送结果
+    if (result == 0) {
+        Log.d(&quot;send_message&quot;,&quot;Send message success&quot;)
+    } else {
+        Log.d(&quot;send_message&quot;,&quot;Send message Error: $result&quot;)
+    }
+}
+
+2 二进制消息发送
+2.1 接口定义
+int sendMessage(String name, Caps args, byte[] data, int offset, int size);
+
+**参数说明**：
+
+  - `name`：消息名称（需与移动端约定一致）
+  - `args`：结构化消息参数（Caps对象）
+  - `data`：二进制数据数组
+  - `offset`：数据起始偏移量
+  - `size`：要发送的数据长度
+
+**返回值**：
+
+  - `0`：发送成功
+  - `-1`：参数错误
+  - `-3`：内部错误
+
+## 2.2 示例代码
+
+// 假设 CXRServiceBridge 已初始化并可用
+val cxrServiceBridge = CXRServiceBridge()
+
+fun sendExampleMessage() {
+    // 1. 创建 Caps 对象并填充数据
+    val args = Caps()
+    args.write(&quot;send_message&quot;)  // 写入字符串消息
+    args.writeUInt32(5)        // 写入一个无符号32位整数参数（示例值）
+
+    // 2. 准备要发送的二进制数据（示例：空数据）
+    val data = byteArrayOf()  // 实际场景中替换为需要发送的数据
+    val offset = 0            // 数据偏移量
+    val size = data.size      // 数据大小
+     
+    // 3. 调用 sendMessage 发送数据
+    val result = cxrServiceBridge.sendMessage(
+        &quot;message_channel&quot;,  // 消息通道名称（根据实际协议定义）
+        args,               // 参数对象
+        data,               // 二进制数据
+        offset,           // 数据起始偏移量
+        size                // 数据长度
+    )
+     
+    // 4. 处理发送结果
+    if (result == 0) { 
+        Log.d(&quot;send_message&quot;,&quot;Send message success&quot;)
+    } else {
+        Log.d(&quot;send_message&quot;,&quot;Send message Error: $result&quot;)
+    }
+}

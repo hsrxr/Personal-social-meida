@@ -1,0 +1,111 @@
+# 开发流程与状态机
+
+## 端到端开发流程
+
+flowchart TD
+    devEnv[DevEnvAndRepos] --&gt; sdkImport[SdkImport]
+    sdkImport --&gt; authFlow[AuthGetToken]
+    authFlow --&gt; sessionPick{SessionType}
+    sessionPick --&gt;|CustomView| cvConnect[ConnectCustomView]
+    sessionPick --&gt;|CustomApp| caConnect[ConnectCustomApp]
+    cvConnect --&gt; sceneBuiltCv[SceneBuiltOnGlasses_CustomView]
+    caConnect --&gt; sceneBuiltCa[SceneBuiltOnGlasses_CustomApp]
+    sceneBuiltCv --&gt;|customViewOpen_ok| capCheckCv{Capability_CustomView}
+    sceneBuiltCa --&gt;|openApp_ok| capCheckCa{Capability_CustomApp}
+    capCheckCv --&gt;|Audio| audioUse[AudioStream]
+    capCheckCv --&gt;|Photo| photoUse[PhotoCapture]
+    capCheckCa --&gt;|Audio| audioUse
+    capCheckCa --&gt;|Photo| photoUse
+    capCheckCa --&gt;|CustomCmd| cmdUse[CustomCommand]
+
+说明：
+
+  1. **DevEnv**：手机系统版本（Android minSdk 31+）、蓝牙、Rokid AI App **≥ 1.9.0**、眼镜固件就绪。
+  2. **SdkImport**：Gradle 引入 `client-l:1.0.4` 与清单配置。
+  3. **Auth**：通过必要 App 授权，拿到有效 `token`。
+  4. **Session**：选择 `CUSTOMVIEW` 或 `CUSTOMAPP`，完成 `configCXRSession` 与 `connect`。
+  5. **SceneBuiltOnGlasses**：眼镜端已打开自定义 View 或已拉起目标应用。
+  6. **Capability**：音频/拍照两类会话均可用；自定义指令仅 CustomApp。
+
+## Android：鉴权状态
+
+stateDiagram-v2
+    [*] --&gt; Idle
+    Idle --&gt; PendingAuth: requestAuthorization
+    PendingAuth --&gt; Authed: AuthSuccess
+    PendingAuth --&gt; Failed: AuthFail
+    PendingAuth --&gt; Cancelled: AuthCancel
+    Authed --&gt; Idle: clearOrReauth
+    Failed --&gt; Idle
+    Cancelled --&gt; Idle
+
+Android：链路与会话阶段
+Hub 典型三阶段：`Connecting` → `SceneNotReady` → `CapabilitiesReady`。
+
+stateDiagram-v2
+    [*] --&gt; LinkCreated
+    LinkCreated --&gt; SessionConfigured: configCXRSession
+    SessionConfigured --&gt; ConnectRequested: connect_token
+    ConnectRequested --&gt; TransportUp: onCXRLConnected_true
+    ConnectRequested --&gt; TransportDown: onCXRLConnected_false
+    TransportUp --&gt; BtUp: onGlassBtConnected_true
+    TransportUp --&gt; BtDown: onGlassBtConnected_false
+    BtUp --&gt; LinkReady: session_ready
+    BtDown --&gt; NotReady: capability_blocked
+    LinkReady --&gt; SceneReady: scene_built_on_glasses
+    SceneReady --&gt; ReadyForCapability: audio_photo_cmd_ok
+
+  - **链路就绪（CustomView / CustomApp）**：`onCXRLConnected(true)` 且 `onGlassBtConnected(true)`
+  - **会话构建完成（CustomView）**：`onCustomViewOpened`
+  - **会话构建完成（CustomApp）**：`onOpenAppResult(true)` 或 `onGlassAppResume(true)`
+
+详述见连接与会话专章。
+
+## Android：能力门控
+
+flowchart LR
+    subgraph audioPhoto [AudioAndPhoto]
+        needLink[sharedLink_nonnull]
+        needScene[scene_opened_on_glasses]
+    end
+    subgraph customCmd [CustomCmd]
+        needAppSession[CUSTOMAPP_session]
+        needLink2[sharedLink_nonnull]
+        needAppScene[app_opened_on_glasses]
+    end
+    subgraph deviceControl [设备控制: 亮度/音量]
+        needLink3[sharedLink_nonnull]
+        linkReady[link_ready]
+        deviceControlAvailable[可调用 setGlassBrightness/setGlassVolume]
+    end
+    needLink --&gt; audioPhoto
+    needScene --&gt; audioPhoto
+    needAppSession --&gt; customCmd
+    needLink2 --&gt; customCmd
+    needAppScene --&gt; customCmd
+    needLink3 --&gt; linkReady
+    linkReady --&gt; deviceControlAvailable
+
+跨平台一致性：能力门控（Android / iOS）
+
+  - **音频 / 拍照**：CustomView 与 CustomApp 均可用，但均需链路就绪 + 会话构建完成。
+  - **自定义指令**：**仅 CustomApp**；CustomView 不可用。
+  - **设备控制（亮度/音量）**：链路就绪后即可调用；无需会话构建完成。
+  - 上述规则在 Android 与 iOS 保持一致。
+
+iOS：鉴权与链路（概念）
+
+  - 使用 `client.auth.statePublisher` / `eventPublisher` 观察鉴权状态（详见 iOS 鉴权专章）。
+  - 使用 `audioEventPublisher`、`customViewRunningEventPublisher` 等观察运行时事件。
+
+stateDiagram-v2
+    [*] --&gt; Unauthenticated
+    Unauthenticated --&gt; Authenticating: authenticate
+    Authenticating --&gt; Authenticated: success
+    Authenticating --&gt; Unauthenticated: failure
+    Authenticated --&gt; LinkReady: link_ready
+    LinkReady --&gt; SceneReady: scene_built_customView_or_customApp
+    SceneReady --&gt; ReadyForFeatures: audio_photo_cmd_allowed
+    ReadyForFeatures --&gt; Unauthenticated: logout_or_expire
+
+具体事件名以 `RGCxrClient` 头文件为准（iOS SDK v1.0.4）。

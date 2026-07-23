@@ -1,0 +1,40 @@
+# iOS：SDK导入
+
+## 概述
+
+在 iOS 工程中通过 **CocoaPods** 引入 **RGCxrClient**（及依赖如 **RGCoreKit**），配置 **Info.plist** 与 **URL Scheme**，使应用能够使用 `CxrClient.shared` 完成鉴权回调与后续能力调用。
+
+## 使用前提
+
+  - Xcode 与 Swift 版本满足 Pod 要求（常见为 iOS **13+**、Xcode **16+** 量级，以 Pod 发行为准）。
+  - 已创建或打开目标 `.xcodeproj`，并安装 CocoaPods 工具链。
+
+## Podfile 示例
+
+source 'https://cdn.cocoapods.org/'
+platform :ios, '13.0'
+
+target 'YourApp' do
+  use_frameworks!
+  pod 'RGCxrClient'
+  pod 'RGCoreKit'
+end
+
+执行 `pod install` 后请使用 **`.xcworkspace`** 打开工程。
+
+## Info.plist
+
+  1. **URL Types**：为鉴权回跳配置自定义 Scheme（文档与历史示例常用 `cxrl`，须与授权配置一致）。
+  2. **LSApplicationQueriesSchemes**：添加 `rokidai`，用于检测/唤起 Rokid AI App。
+  3. **蓝牙**：`UIBackgroundModes` 包含 `bluetooth-central`，并补充 `NSBluetoothAlwaysUsageDescription` 等文案。
+
+## URL 回调转发
+
+在 `AppDelegate` 或 `SceneDelegate` 的 `openURL` / `scene(_:openURLContexts:)` 中转发：
+
+if CxrClient.shared.handleOpenURL(url) {
+    return true
+}
+
+关于 ios_cxr_l_sample
+若本地 `ios_cxr_l_sample` 目录尚未包含源码，请先完成 `git clone` / `git pull`。集成完成后，以仓库内 **Podfile** 与 **Info.plist** 为最终事实来源。

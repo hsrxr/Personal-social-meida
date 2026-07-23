@@ -1,0 +1,37 @@
+# iOS：连接与会话
+
+## 概述
+
+在鉴权通过后，使用 **`CxrClient.shared` 单实例** 建立与眼镜的协同链路。与 Android 显式构造 `CXRLink` 不同，iOS 侧多在初始化选项中区分 **customView / customApp** 等模式，并通过 **Combine** 事件流观察音频、自定义视图运行态等。
+
+## 使用前提
+
+  - 《02-鉴权》 已成功，`auth` 状态为已授权语义。
+
+## 推荐步骤
+
+  1. 配置客户端初始化参数（模式、目标包名、页面名等，以 `RGCxrClientInitializationOptions` 及当前 SDK 头文件为准）。
+  2. 在业务 `UIViewController` 中持有 `let client = CxrClient.shared`（或注入封装层）。
+  3. 订阅：
+
+`auth.statePublisher`：持续观察登出/过期。
+  4. `audioEventPublisher`：音频链路与数据分片。
+  5. `customViewRunningEventPublisher`：自定义视图是否在运行。
+
+  6. 完成 **眼镜端会话构建**（自定义视图已运行，或自定义应用已按 SDK 要求拉起），再开放 **音频、拍照、自定义指令** 功能；不要仅在「已鉴权 + 链路就绪」时开放上述能力。
+
+## 能力可用矩阵（摘要）
+
+| 会话 / 状态                    | 音频 | 拍照 | 自定义指令 | 亮度调节 | 音量调节 |
+| -------------------------- | -- | -- | ----- | ---- | ---- |
+| 未鉴权 / 无 token              | 否  | 否  | 否     | 否    | 否    |
+| 已鉴权但未 `connect`            | 否  | 否  | 否     | 否    | 否    |
+| 已 `connect` 但未完成会话构建       | 否  | 否  | 否     | 是    | 是    |
+| `CUSTOMVIEW` 且自定义 View 已打开 | 是  | 是  | 否     | 是    | 是    |
+| `CUSTOMAPP` 且眼镜端应用已打开      | 是  | 是  | 是     | 是    | 是    |
+
+「会话已构建」请结合 `customViewRunningEventPublisher`、应用前后台/页面名等事件判断（以 `RGCxrClient` 当前版本为准）。自定义指令的严格前置见《自定义指令》。
+
+## Sample 入口（典型）
+
+主界面控制器（文档常用名 `ViewController.swift`）中集中演示各能力按钮与事件绑定；请以 **ios_cxr_l_sample** 内实际文件名替换。

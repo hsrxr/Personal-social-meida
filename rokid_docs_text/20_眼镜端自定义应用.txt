@@ -1,0 +1,42 @@
+# iOS：眼镜端自定义应用
+
+## 概述
+
+在手机端对眼镜上的 **Android 应用包** 做查询、安装、启动、停止、卸载。
+
+## 使用前提
+
+  - 鉴权通过，链路可用。
+  - 已知目标 `packageName` 与可选 `activityName`。
+  - **安装流程**：APK 已加入 iOS 工程资源或可复制到 App 沙盒可读路径。
+
+## 核心接口（命名级）
+
+  - `queryApp(packageName:callback:)`
+  - `installApp(_:callback:)`（入参为本地 APK URL 或路径类型，以 SDK 定义为准）
+  - `openApp(packageName:activityName:url:callback:)`
+  - `stopApp(_:callback:)`
+  - `uninstallApp(_:callback:)`
+
+## 推荐流程
+
+flowchart TD
+    q[queryApp] --&gt;|未安装| i[installApp]
+    q --&gt;|已安装| o[openApp]
+    i --&gt; o
+    o --&gt; s[stopApp_or_uninstallApp_optional]
+
+常见问题
+
+  - **安装失败**：检查 APK 是否打入 Bundle、路径是否可读、眼镜存储空间。
+  - **启动失败**：核对 `packageName` / `activityName` 与 Manifest；与 Android Sample 中 `CONSTANT.APP_PACKAGE_NAME` 思路一致。
+  - **能力顺序**：在 `openApp` 成功、眼镜端应用处于业务约定状态后，再开放 **音频、拍照、自定义指令**（会话构建完成后再用能力 API）��
+
+Sample 入口（典型）
+
+| 动作                | 常见 Demo 方法名                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| 包名常量              | `demoPackageName`                                                                        |
+| 查询 / 安装 / 启停 / 卸载 | `queryAppTapped`、`installAppTapped`、`openAppTapped`、`stopAppTapped`、`uninstallAppTapped` |
+
+请以 **ios_cxr_l_sample** 内 `ViewController`（或等价类）为准。

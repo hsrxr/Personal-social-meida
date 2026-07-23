@@ -1,0 +1,135 @@
+# Android：SDK 导入
+
+## 概述
+
+在手机 Android 工程中引入 CXR-L 客户端库（`client-l`），配置 Maven 仓库与最低系统版本，使应用能够调用 `CXRLink` 及配套 API。
+
+## 前置条件
+
+  - Android Studio，Gradle Kotlin DSL 或 Groovy 均可。
+  - 设备或模拟器满足 **minSdk 31**（Android 12+）。
+  - 网络可访问 Rokid Maven 公库。
+  - 手机已安装 **Rokid AI App ≥ 1.9.0**（大陆）或 **Hi Rokid**（海外），用于鉴权。
+
+## 仓库配置
+
+在工程根目录 `settings.gradle.kts` 的 `dependencyResolutionManagement.repositories` 中加入：
+
+maven { url = uri(&quot;https://maven.rokid.com/repository/maven-public/&quot;) }
+
+同时保留 `google()`、`mavenCentral()` 等常用仓库。
+
+## 依赖声明
+
+在 `app/build.gradle.kts` 的 `dependencies` 中：
+
+implementation(&quot;com.rokid.cxr:client-l:1.0.4&quot;)
+
+Application 与全局连接
+`CXRLink` 实例在会话生命周期内应全局复用。推荐在 `Application` 中持有单例引用，供鉴权后的会话页与子能力页共享：
+
+class MyApplication : Application() {
+    var sharedLink: CXRLink? = null
+
+    fun resetSession() {
+        sharedLink = null
+    }
+}
+
+在 `AndroidManifest.xml` 注册：
+
+&lt;application android:name=&quot;.MyApplication&quot; ...&gt;
+
+**注意**：`namespace` / `applicationId` 为你自有应用包名，与 `CUSTOMAPP` 会话配置的眼镜端目标包名无关。
+
+## 权限与清单（必需）
+
+RenewCXRLSample 与 CXR-L 集成须声明以下权限；按能力裁剪时，**至少保留 `INTERNET`**，CustomApp 安装路径涉及公共存储时须补齐存储相关权限。
+
+| 权限                                          | 必需性                          | 用途                              |
+| ------------------------------------------- | ---------------------------- | ------------------------------- |
+| `INTERNET`                                  | **必需**                       | SDK 网络通信                        |
+| `MANAGE_MEDIA`                              | 推荐                           | 媒体/文件访问（Sample 已声明）             |
+| `MANAGE_EXTERNAL_STORAGE`                   | CustomApp 读公共目录 APK 时 **必需** | Android 11+ 访问公共存储中的 `cxrL.apk` |
+| `READ_EXTERNAL_STORAGE`（`maxSdkVersion=32`） | Android 12 及以下读外部存储时 **必需**  | 读取公共目录 APK                      |
+
+### CustomApp：安装 APK 前的运行时权限
+
+从公共路径（如 `/sdcard/DCIM/Rokid/cxrL.apk`）读取 APK 并调用 `appUploadAndInstall` 前，须：
+
+  1. **Android 11+（API 30+）**：引导用户授予「所有文件访问」(`Environment.isExternalStorageManager()`)。
+  2. **Android 6–12**：请求 `READ_EXTERNAL_STORAGE` 运行时权限。
+  3. **应用专属目录**（如 `getExternalFilesDir(&quot;DCIM/Rokid&quot;)`）通常无需上述权限，**推荐优先使用**。
+
+调用 `appUploadAndInstall` 前应确认目标文件 `exists()`、`canRead()`，且公共路径已满足存储权限（Sample 使用 `ApkInstallAccess` 校验）。
+
+若需分享本地文件（如音频 WAV），可配置 `FileProvider`：
+
+&lt;provider
+    android:name=&quot;androidx.core.content.FileProvider&quot;
+    android:authorities=&quot;${applicationId}.fileprovider&quot;
+    android:exported=&quot;false&quot;
+    android:grantUriPermissions=&quot;true&quot;&gt;
+    &lt;meta-data
+        android:name=&quot;android.support.FILE_PROVIDER_PATHS&quot;
+        android:resource=&quot;@xml/file_paths&quot; /&gt;
+&lt;/provider&gt;
+
+同步与验证
+
+  1. 执行 Gradle Sync，确认无依赖解析错误。
+  2. 任意源码文件中可成功 `import com.rokid.cxr.link.CXRLink`。
+
+下一步
+完成导入后，继续鉴权获取 `token`，再进入连接与会话。
+
+## 附录：对照工程
+
+官方示例工程 RenewCXRLSample（`com.rokid.renewcxrlsample`）可参考 `settings.gradle.kts`、`app/build.gradle.kts` 与 `CXRLApplication.kt`。示例工程内 SDK 版本可能与文档发布版本不同，**集成时以本文 `1.0.4` 为准**。
+
+## 眼镜端：CXR-S SDK 导入
+
+在眼镜端 Android 工程中引入 **CXR-S** 客户端库（Maven 构件 `cxr-service-bridge`），使应用能够调用 `CXRServiceBridge` 及 `Caps` API。手机侧使用上文 `client-l`；**勿在手机 App 中引入 `cxr-service-bridge`**。
+
+### 依赖声明
+
+在眼镜端 `app/build.gradle.kts` 的 `dependencies` 中：
+
+implementation(&quot;com.rokid.cxr:cxr-service-bridge:1.0-20260417.063502-103&quot;)
+
+> **版本说明**：文档以 CXRSWithCXRLSample 快照坐标为例；正式发布版本请以 Sample 工程 `build.gradle.kts` 与发布说明为准。
+
+AndroidManifest
+CXRSWithCXRLSample 清单较为精简：
+
+  - 声明入口 `MainActivity`（`android:exported=&quot;true&quot;`）。
+  - **无** CXR 相关额外权限；镜腿/触控板系统广播在运行时通过 `registerReceiver` 注册。
+
+&lt;application ...&gt;
+    &lt;activity
+        android:name=&quot;.activities.main.MainActivity&quot;
+        android:exported=&quot;true&quot;
+        ...&gt;
+        &lt;intent-filter&gt;
+            &lt;action android:name=&quot;android.intent.action.MAIN&quot; /&gt;
+            &lt;category android:name=&quot;android.intent.category.LAUNCHER&quot; /&gt;
+        &lt;/intent-filter&gt;
+    &lt;/activity&gt;
+&lt;/application&gt;
+
+初始化时机
+`CXRServiceBridge` 应在 CustomApp 被手机 `appStart` 拉起后尽早完成：
+
+  1. `setStatusListener(StatusListener)` — 监听连接状态。
+  2. `subscribe(clientKey, MsgCallback)` — 订阅手机下发的自定义指令通道。
+
+详见自定义指令专章。Sample 在 `MainViewModel.init` 中完成上述两步。
+
+### 约束
+
+  - `applicationId` 须与手机端 `CUSTOMAPP` 会话配置的 `packageName` 一致。
+  - SDK 版本须与手机端 `client-l` 及眼镜系统版本兼容，升级时两端同步验证。
+
+### 附录：对照工程
+
+CXRSWithCXRLSample：`app/build.gradle.kts`（`minSdk = 31`、依赖坐标）、`app/src/main/AndroidManifest.xml`。

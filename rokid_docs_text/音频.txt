@@ -1,0 +1,34 @@
+# iOS：音频
+
+## 概述
+
+支持录音、停止录音、向眼镜 **推流播放** 等能力，并通过 **`audioEventPublisher`** 观察链路状态与数据分片。与 Android 侧「直接 `startAudioStream` 收 PCM」在 API 形态上不同，但业务目标一致：**在已建立会话后处理音频数据**。
+
+## 使用前提
+
+  - 鉴权完成，链路就绪（见 《连接与会话》）。
+  - **眼镜端会话已构建**：自定义视图已在眼镜上运行，或自定义应用已拉起；再开始录音或推流。**不要**在仅完成连接、会话未就绪时调用 `startRecord` / `feedAudio`。
+
+## 核心接口（命名级）
+
+  - `startRecord(_:codec:mode:)` / `stopRecord(_:)`：控制录音采集。
+  - `audioEventPublisher`：订阅 started / stream 等事件，用于 UI 与调试日志。
+
+## 推荐流程
+
+  1. `startRecord` 开始采集 → 订阅 `audioEventPublisher`。
+  2. 结束：`stopRecord`，若曾推流则 `stopPlayAudio`。
+  3. 页面销毁时取消订阅并停止定时任务，避免内存泄漏。
+
+## 开发建议
+
+  - `startRecord` 与 `stopRecord` 的 `type` 参数保持一致（以 SDK 枚举为准）。
+
+## Sample 入口（典型）
+
+| 动作      | 常见 Demo 方法名                              |
+| ------- | ---------------------------------------- |
+| 录音开始/停止 | `startRecordTapped` / `stopRecordTapped` |
+| 事件绑定    | `bindAudioEvents`                        |
+
+请以 **ios_cxr_l_sample** 中实际 Swift 符号为准。

@@ -1,0 +1,43 @@
+# v1.0.4
+
+v1.0.4 聚焦**设备控制能力**，新增亮度/音量调节 API，满足开发者对眼镜基础硬件控制的高频需求。
+
+  1. Android `client-l` 升级至 **1.0.4**；
+  2. 新增设备控制 API：`setGlassBrightness(level)` / `setGlassVolume(level)`，level 范围 0…15；
+  3. 新增设备信息增强：`GlassInfo` 增加 `brightness` / `sound` 字段，通过 `onGlassDeviceInfo` 回调获取；
+  4. 文档新增「设备控制」专章（Android / iOS），涵盖亮度/音量设置与查询；
+  5. Android Sample 压缩包更新至 v1.0.4；
+  6. iOS `RGCxrClient` 新增 `setBrightness` / `getBrightness` / `setVolume` / `getVolume`；`RGCxrDeviceInfo` 增加 `brightness` / `sound` 字段；
+  7. iOS 文档与 Sample 版本号统一升级至 v1.0.4（与 Android 对齐；v1.0.2 / v1.0.3 的变更已在 iOS 内部先行合入）。
+
+# v1.0.3
+
+  1. Android `client-l` 升级至 **1.0.3**；
+  2. 必要 App：集成 **client-l:1.0.3** 时，Rokid AI App（大陆）须 **≥ 1.9.0**；
+  3. 文档 v1.0.3 以开发者集成视角重写，统一「会话构建」表述；
+  4. Android 眼镜端自定义 View 专章补充 **CustomView JSON Schema**（`LinearLayout`、`TextView`、`ImageView`、`RelativeLayout`）；
+  5. 眼镜端 **CXR-S** 集成说明并入 CXR-L 文档（SDK 导入、眼镜端自定义应用、自定义指令、按键与系统广播等专章）；
+  6. 发布手机端 **RenewCXRLSample**（`com.rokid.renewcxrlsample`）与眼镜端 **CXRSWithCXRLSample**（`com.rokid.cxrswithcxrl`），并提供 OSS 压缩包；
+  7. iOS 文档与 Sample 版本号标注为 v1.0.1（本文档包 Android 与 iOS 专章版本以各专章为准）。
+
+# v1.0.2
+
+  1. Android `client-l` 升级至 **1.0.2**；
+  2. 鉴权：`requestAuthorization` 需传入 `GlassPermission` 数组（如麦克风、相机、媒体）；若用户已授权，可同步返回 `Pair` 并直接解析 token；
+  3. `sendCustomCmd` 支持直接传入 `Caps`；
+  4. CXRLSample 与上述 API 对齐。
+  5. iOS `RGCxrClient` 升级至 **1.0.2**，CocoaPods 需配置 Rokid specs 源；
+  6. 应用启动时 `CxrClient.initialize(mode:options:)` 区分 customApp / customView；
+  7. 鉴权 `scopes` 改为 SDK 权限枚举（如 `.microphone`）；
+  8. 多数能力 API 同步返回 `RGCxrClientError?`；`sendCustomCmd` 以无 callback 发送、`notifyEventPublisher` 订阅接收为主；
+  9. ios_cxr_l_sample 与上述 API 对齐。
+
+# v1.0.1
+
+  1. 初版 SDK；
+  2. 支持获取 Rokid AI App 的授权；
+  3. 支持创建眼镜端自定义 View 场景；
+  4. 支持创建眼镜端自定义应用场景；
+  5. 支持获取眼镜端音频；
+  6. 支持通过眼镜进行拍照；
+  7. 支持与眼镜端自定义应用进行自定义指令交互。

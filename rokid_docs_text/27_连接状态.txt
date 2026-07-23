@@ -1,0 +1,35 @@
+**在阅读本章节前，请注意已明确《SDK 导入》章节内容**
+
+# 监听移动端连接状态
+
+CXR-S SDK 可以通过设置`StatusListener`监听来自移动端的连接状态。
+
+private val TAG = &quot;StatusListener&quot;
+private val cxrBridge = CXRServiceBridge()
+//  连接状态监听
+private val statusListener by lazy {
+    object : CXRServiceBridge.StatusListener {
+        // 连接成功回调
+        override fun onConnected(name: String, type: Int) {    
+            Log.d(TAG, &quot;Connected to $name $type&quot;)
+        }
+        // 断开连接回调
+        override fun onDisconnected() {
+            Log.d(TAG, &quot;Disconnected&quot;)
+        }
+        // ARTC状态更新
+        override fun onARTCStatus(health: Float, reset: Boolean) {
+            Log.d(TAG, &quot;ARTC Status: Health: ${(health * 100).toInt()}%&quot;)
+        }
+    }
+}
+fun setStatusListener() {
+    cxrBridge.setStatusListener(statusListener)
+}
+
+**参数说明：**
+
+  - `name`: 设备名称
+  - `type`: 设备类型（1-Android，2-iPhone，3-Unknown）
+  - `health`: 成功发送的ARTC帧百分比（0.0-1.0）
+  - `reset`: 是否发生了帧队列重置

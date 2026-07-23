@@ -1,0 +1,59 @@
+**本章节以使用Kotlin DSL（build.gradle.kts）为例**
+
+# 配置Maven 仓库
+
+CXR-S SDK 采用Maven 在线管理SDK Package。
+
+Maven 仓库地址:（“https://maven.rokid.com/repository/maven-public/”）
+
+找到settings.gradle.kts，并在`dependencyResolutionManagement`节点的`repositories` 中添加Maven仓库。
+
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex(&quot;com\\.android.*&quot;)
+                includeGroupByRegex(&quot;com\\.google.*&quot;)
+                includeGroupByRegex(&quot;androidx.*&quot;)
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        maven {
+            url = uri(&quot;https://maven.rokid.com/repository/maven-public/&quot;)
+        }
+        mavenCentral()
+    }
+}
+
+rootProject.name = &quot;CXRServiceDemo&quot;
+include(&quot;:app&quot;)
+ 
+
+依赖导入
+CXR-S SDK Package（“com.rokid.cxr:cxr-service-bridge:1.0-20250519.061355-45”）。
+
+在build.gradle.kts 的`dependencies` 节点中添加依赖。
+
+***注意：SDK 需要设置minSdk≥28***。
+
+//...Other Settings
+android {
+    //...Other Settings
+    defaultConfig {
+        //...Other Settings
+        minSdk = 28
+    }
+   //...Other Settings
+    
+}
+dependencies {
+   //...Other Settings
+    implementation(&quot;com.rokid.cxr:cxr-service-bridge:1.0-20250519.061355-45&quot;)
+}

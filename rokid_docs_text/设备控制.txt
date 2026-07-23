@@ -1,0 +1,73 @@
+# iOS：设备控制
+
+## 概述
+
+在鉴权完成且链路就绪后，通过 `CxrClient.shared` 调节眼镜亮度（0&hellip;15）和音量（0&hellip;15）。亮度/音量控制属于设备级能力，与音频/拍照不同，不需要 CustomView 或 CustomApp 会话构建完成。
+
+## 前置条件
+
+  - SDK 已初始化（`CxrClient.initialize(mode:options:)` 成功）
+  - 鉴权已完成
+  - 链路就绪
+
+## 核心 API
+
+| 方法                                                          | 返回值               | 说明                     |
+| ----------------------------------------------------------- | ----------------- | ---------------------- |
+| `setBrightness(level: Int, callback: ((Bool) -&gt; Void)?)` | RGCxrClientError? | 设置亮度，level 0&hellip;15 |
+| `getBrightness(callback: ((Int?) -&gt; Void)?)`             | RGCxrClientError? | 查询亮度                   |
+| `setVolume(level: Int, callback: ((Bool) -&gt; Void)?)`     | RGCxrClientError? | 设置音量，level 0&hellip;15 |
+| `getVolume(callback: ((Int?) -&gt; Void)?)`                 | RGCxrClientError? | 查询音量                   |
+
+新版 Session API 中通过 `session.device.setBrightness(level:callback:)` / `session.device.setVolume(level:callback:)` 调用。
+
+## 错误码
+
+| 错误码               | 含义             |
+| ----------------- | -------------- |
+| nil               | 前置条件通过，已进入异步流程 |
+| .notInitialized   | SDK 未初始化       |
+| .notAuthenticated | 未鉴权或 token 已过期 |
+| .notReady         | 运行时前置状态不满足     |
+
+## 集成示例
+
+let client = CxrClient.shared
+
+// 设置亮度为 8
+let error = client.setBrightness(level: 8) { success in
+    if success {
+        print(&quot;亮度设置成功&quot;)
+    }
+}
+if let error = error {
+    print(&quot;前置条件不满足: \(error)&quot;)
+}
+
+// 设置音量为 10
+client.setVolume(level: 10) { success in
+    print(&quot;音量设置: \(success)&quot;)
+}
+
+// 查询当前亮度
+client.getBrightness { level in
+    if let level = level {
+        print(&quot;当前亮度: \(level)&quot;)
+    }
+}
+
+// 查询当前音量
+client.getVolume { level in
+    if let level = level {
+        print(&quot;当前音量: \(level)&quot;)
+    }
+}
+
+约束
+
+  - level 范围 0&hellip;15（含）
+  - 返回值 nil 表示前置条件通过、已进入异步流程；非 nil 表示因错误码被拒绝
+  - 设备信息变化可通过 `deviceInfoEventPublisher` 订阅
+
+附录：对照工程
+ios_cxr_l_sample 中 ViewController 的设备控制区域演示亮度/音量设置与查询。

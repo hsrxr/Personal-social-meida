@@ -1,0 +1,37 @@
+# iOS：拍照
+
+## 概述
+
+触发眼镜端拍照，并以回调 **Data** 形式取回 JPEG 字节流，在手机上解码为 `UIImage` 展示或落盘。
+
+## 使用前提
+
+  - 鉴权通过且链路就绪（见《连接与会话》）。
+  - **眼镜端会话已构建**：与 Android 一致，须在自定义视图已运行或自定义应用已拉起之后再调用 `takePhoto` / `takePhotoWithData`；避免仅在「已连接」状态下触发拍照。
+
+## 核心接口（命名级）
+
+  - `takePhotoWithData(width:height:quality:callback:)`：指定宽高与压缩质量，在回调中接收 `Data`。
+
+## 示例骨架
+
+client.takePhotoWithData(width: 1920, height: 1080, quality: 80) { data in
+    let image = UIImage(data: data)
+    // 更新 UIImageView 等
+}
+
+参数可与 Android Sample 的 `1024 x 768 quality 80` 对齐做联调，再按产品调整。
+
+## 开发建议
+
+  - 高分辨率会增加传输时延。
+
+## Sample 入口（典型）
+
+| 动作     | 常见 Demo 方法名               |
+| ------ | ------------------------- |
+| 普通拍照   | `takePhotoTapped`         |
+| 数据回调拍照 | `takePhotoWithDataTapped` |
+| 预览控件   | `photoPreviewImageView`   |
+
+请以 **ios_cxr_l_sample** 实际代码为准。

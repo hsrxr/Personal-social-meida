@@ -1,0 +1,44 @@
+# iOS：眼镜端自定义View
+
+## 概述
+
+通过 JSON 描述布局并下发图标资源，在眼镜端打开、更新、关闭自定义界面。
+
+## 使用前提
+
+  - 已完成鉴权与连接（见 《连接与会话》。
+  - 已准备图标编码数据与布局 JSON（字段需与协议一致）。
+
+## 核心接口（命名级）
+
+以下名称以 **RGCxrClient** 对外 Swift API 为准，若 Xcode 自动补全略有差异，以头文件为准：
+
+  - `sendCustomViewIcons(_:)`：上传图标（编码为 JSON / 结构体数组）。
+  - `openCustomView(_:)`：首次打开完整树。
+  - `updateCustomView(_:)`：增量更新。
+  - `closeCustomView()`：关闭。
+  - `customViewRunningEventPublisher`：观察运行态，驱动手机端 UI 提示。
+
+## 推荐顺序
+
+  1. 组装 `IconData`（或等价类型）列表 → `sendCustomViewIcons`。
+  2. `openCustomView` 下发根节点与子节点。
+  3. 局部变更 → `updateCustomView`（仅包含变更节点 id 与 props）。
+  4. 结束 → `closeCustomView`。
+
+## 开发建议
+
+  - 图标 `name` 与布局 JSON 中引用保持一致。
+  - 优先差量更新，降低带宽与闪烁。
+  - 结合 `customViewRunningEventPublisher` 判断是否可以安全再次 `open`。
+  - **会话构建完成后**（视图已在眼镜上运行），再启用同会话下的 **音频、拍照** 等能力入口（与 《连接与会话》）。
+
+## Sample 入口（典型）
+
+| 动作    | 常见方法名（Demo）                                                                 |
+| ----- | --------------------------------------------------------------------------- |
+| 发图标   | `sendCustomIcons`                                                           |
+| 开/更/关 | `openCustomViewTapped` / `updateCustomViewTapped` / `closeCustomViewTapped` |
+| 数据结构  | `CustomViewItems.swift` 等                                                   |
+
+请以 **ios_cxr_l_sample** 仓库实际符号名为准。

@@ -1,0 +1,50 @@
+# iOS：鉴权
+
+## 概述
+
+通过 `CxrClient.shared.auth` 发起授权，获取后续链路使用的 **token** 与授权状态。授权过程依赖 Rokid AI App，回跳由 **URL Scheme** 触发并在应用委托中交给 SDK 解析。
+
+## 使用前提
+
+  - 已完成 《SDK导入》。
+  - `Info.plist` 已配置 URL Scheme 与 `rokidai` 查询白名单。
+  - `AppDelegate` / `SceneDelegate` 已调用 `CxrClient.shared.handleOpenURL`。
+
+## 核心成员（概念）
+
+以 `let client = CxrClient.shared` 为例：
+
+  - `client.auth.authenticate(scopes:appName:completion:)`：发起鉴权。
+  - `client.auth.clearAuthentication()`：清理登录态（按需）。
+  - `client.auth.eventPublisher`：鉴权过程事件流。
+  - `client.auth.statePublisher`：鉴权状态机，可用于按钮可用性、UI 提示。
+
+## 推荐流程
+
+  1. 用户点击「授权」按钮 → 调用 `authenticate`，`scopes` 与业务一致（常见包含设备控制、音频等字符串标识，以实际 SDK 说明为准）。
+  2. 在 `completion` 中处理 `.success(let (token, _))` / `.failure`。
+  3. 订阅 `statePublisher`，在 `Authenticated` 等价状态后开放连接与能力入口。
+  4. 失败时提供重试与「清除授权」操作。
+
+## 示例骨架
+
+client.auth.authenticate(scopes: [&quot;device_control&quot;, &quot;audio_stream&quot;], appName: &quot;YourAppName&quot;) { result in
+    switch result {
+    case .success(let (token, _)):
+        // 持久化或内存保存 token，进入连接流程
+        print(&quot;token length=\(token.count)&quot;)
+    case .failure(let error):
+        print(&quot;auth failed: \(error)&quot;)
+    }
+}
+
+`scopes` 与 `appName` 以你方与 Rokid 开放平台约定为准。
+
+## Sample 入口（典型 Demo 命名）
+
+| 动作     | 常见位置                                         |
+| ------ | -------------------------------------------- |
+| 发起鉴权   | `ViewController` 内按钮事件（如 `authButtonTapped`） |
+| URL 回调 | `AppDelegate.swift`、`SceneDelegate.swift`    |
+
+若 `ios_cxr_l_sample` 中类名不同，以实际 Swift 文件为准。

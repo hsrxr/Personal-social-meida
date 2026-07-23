@@ -1,0 +1,9 @@
+# 打开ADB
+
+使用Rokid CXR-S SDK 时，需要通过Rokid AI APP打开Rokid Glasses 上的adb。
+
+# 使用专用开发线
+
+Rokid Glasses 的磁吸充电口，也可以作为数据口使用。需要使用专门的开发线。
+
+***Tips：默认购买的产品中只有充电线，如果需要开发线，请联系开发者小助理***
