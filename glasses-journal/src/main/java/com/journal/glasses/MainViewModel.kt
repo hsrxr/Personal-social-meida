@@ -208,7 +208,7 @@ class MainViewModel : ViewModel() {
         try {
             val caps = Caps().apply {
                 write(action.eventType)
-                write(action.timestamp)
+                writeInt64(action.timestamp)
                 if (action.metadata.isNotEmpty()) write(action.metadata)
             }
             cxrBridge.sendMessage(CapsProtocol.CHANNEL_JOURNAL_EVENT, caps)

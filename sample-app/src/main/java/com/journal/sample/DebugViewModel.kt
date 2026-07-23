@@ -195,9 +195,10 @@ class DebugViewModel : ViewModel() {
 
     private fun onSessionBuilt() {
         appendLog("🎉 会话构建完成, 初始化能力管道...")
+        // CustomCmdRouter already initialized by SessionManager
         photoPipeline.init()
         commandChannel.init()
-        // audio receiver is on-demand
+        audioReceiver.init()
     }
 
     fun takePhoto() {
@@ -207,15 +208,16 @@ class DebugViewModel : ViewModel() {
     }
 
     fun startAudio() {
-        audioReceiver.startListening()
+        // Audio flows from glasses passively via VAD-triggered events.
+        // The AudioReceiver is always subscribed; audioChunkFlow emits when
+        // glasses detects end-of-speech.
         _state.update { it.copy(audioActive = true) }
-        appendLog("🎤 开始接收音频流...")
+        appendLog("🎤 等待眼镜端语音输入 (VAD 自动截断)...")
     }
 
     fun stopAudio() {
-        audioReceiver.stopListening()
         _state.update { it.copy(audioActive = false) }
-        appendLog("⏹ 停止音频流")
+        appendLog("⏹ 停止接收")
     }
 
     fun sendTestCommand() {

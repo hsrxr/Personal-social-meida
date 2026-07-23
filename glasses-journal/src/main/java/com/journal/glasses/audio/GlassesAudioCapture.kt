@@ -137,7 +137,7 @@ class GlassesAudioCapture(
     private fun sendAudioFrame(pcmChunk: ByteArray, isFinal: Boolean) {
         try {
             val caps = Caps().apply {
-                write(frameSeq++)
+                writeInt32(frameSeq++)
                 write(pcmChunk)
                 write(isFinal)
             }

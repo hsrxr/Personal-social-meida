@@ -3,19 +3,20 @@ package com.journal.cxrcore.command
 import android.util.Log
 import com.rokid.cxr.Caps
 import com.rokid.cxr.link.CXRLink
-import com.rokid.cxr.link.callbacks.ICustomCmdCbk
 import com.journal.cxrcore.app.JournalApplication
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 /**
- * Bidirectional command channel between phone and glasses via CUSTOMAPP Caps protocol.
+ * Bidirectional command channel between phone and glasses via Caps protocol.
  *
- * Usage:
- * - Collect [inboundFlow] for events from glasses (key events, etc.).
- * - Call [sendToGlasses] to send commands to glasses.
- * - Call [release] when done.
+ * Key events from glasses (journal_event) are emitted via [inboundFlow].
+ * Outbound commands go through [sendToGlasses].
+ *
+ * IMPORTANT: Must call [init] once after session is built BEFORE any other pipelines.
+ * The [CustomCmdRouter.init] must be called first (by SessionManager or debug code),
+ * then [CommandChannel.init] subscribes to its channels.
  */
 class CommandChannel {
 
@@ -26,32 +27,24 @@ class CommandChannel {
     private val _inboundFlow = MutableSharedFlow<JournalEvent>(extraBufferCapacity = 4)
     val inboundFlow: SharedFlow<JournalEvent> = _inboundFlow.asSharedFlow()
 
-    private var initialized = false
-
-    private val cmdCallback = object : ICustomCmdCbk {
-        override fun onCustomCmdResult(key: String?, payload: ByteArray?) {
-            // Only process our agreed channel
-            if (key != CapsProtocol.CHANNEL_JOURNAL_EVENT || payload == null) return
-            val event = parseJournalEvent(payload) ?: return
-            _inboundFlow.tryEmit(event)
-        }
-    }
+    private var subscribed = false
 
     /**
-     * Registers the custom command callback. Call once after session is built.
+     * Subscribes to the journal_event channel via the shared CustomCmdRouter.
+     * CustomCmdRouter.init() must have been called first.
      */
     fun init() {
-        if (initialized) return
-        val link = readyLink() ?: return
-        link.setCXRCustomCmdCbk(cmdCallback)
-        initialized = true
+        if (subscribed) return
+        CustomCmdRouter.subscribe(CapsProtocol.CHANNEL_JOURNAL_EVENT) { payload ->
+            val event = parseJournalEvent(payload) ?: return@subscribe
+            _inboundFlow.tryEmit(event)
+        }
+        subscribed = true
+        Log.d(TAG, "CommandChannel subscribed to ${CapsProtocol.CHANNEL_JOURNAL_EVENT}")
     }
 
     /**
      * Sends a command to the glasses app.
-     *
-     * @param channel the Caps channel name.
-     * @param builder lambda to populate the [Caps] payload.
      */
     fun sendToGlasses(channel: String, builder: Caps.() -> Unit) {
         val link = readyLink() ?: return
@@ -70,27 +63,21 @@ class CommandChannel {
     }
 
     /**
-     * Clears the SDK callback. Call when channel is no longer needed.
+     * Unsubscribes from the journal_event channel.
      */
     fun release() {
-        if (!initialized) return
-        val link = readyLink() ?: return
-        runCatching {
-            link.setCXRCustomCmdCbk(object : ICustomCmdCbk {
-                override fun onCustomCmdResult(key: String?, payload: ByteArray?) {}
-            })
+        if (subscribed) {
+            CustomCmdRouter.unsubscribe(CapsProtocol.CHANNEL_JOURNAL_EVENT)
+            subscribed = false
         }
-        initialized = false
     }
-
-    // --- Internal ---
 
     private fun readyLink(): CXRLink? =
         runCatching { JournalApplication.instance.requireReadyLink() }.getOrNull()
 
     /**
-     * Parses a journal event Caps payload with field order:
-     * [0] eventType (String), [1] timestamp (Long), [2] metadata (String, optional).
+     * Parses a journal event Caps payload.
+     * Fields: [0] eventType (String), [1] timestamp (Long), [2] metadata (String, optional)
      */
     private fun parseJournalEvent(payload: ByteArray): JournalEvent? {
         return runCatching {

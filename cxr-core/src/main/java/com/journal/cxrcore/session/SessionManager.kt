@@ -8,16 +8,15 @@ import com.journal.cxrcore.app.JournalApplication
 import com.journal.cxrcore.link.LinkConnectionHub
 import com.journal.cxrcore.link.LinkSessionGate
 import com.journal.cxrcore.link.LinkState
+import com.journal.cxrcore.command.CustomCmdRouter
 import com.journal.cxrcore.util.ApkInstallAccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -84,6 +83,7 @@ class SessionManager(
      * Disconnect and release all session resources.
      */
     fun disconnect() {
+        CustomCmdRouter.release()
         cxrLink?.let { link ->
             if (_appOpened.value) {
                 runCatching { link.appStop(appCallback) }
@@ -159,6 +159,14 @@ class SessionManager(
         }
     }
 
+    /** Called when session is fully built. Initializes shared infrastructure. */
+    private fun onSessionBuilt() {
+        _linkState.value = LinkState.SessionBuilt
+        val link = cxrLink ?: return
+        CustomCmdRouter.init(link)
+        Log.i(TAG, "Session built: CustomCmdRouter initialized")
+    }
+
     // -- Internal --
 
     private fun readyLinkOrNull(): CXRLink? =
@@ -213,7 +221,7 @@ class SessionManager(
         override fun onOpenAppResult(success: Boolean) {
             Log.i(TAG, "onOpenAppResult: success=$success")
             _appOpened.value = success
-            if (success) _linkState.value = LinkState.SessionBuilt
+            if (success) onSessionBuilt()
         }
 
         override fun onStopAppResult(success: Boolean) {
@@ -224,7 +232,7 @@ class SessionManager(
         override fun onGlassAppResume(resumed: Boolean) {
             Log.i(TAG, "onGlassAppResume: resumed=$resumed")
             _appOpened.value = resumed
-            if (resumed) _linkState.value = LinkState.SessionBuilt
+            if (resumed) onSessionBuilt()
         }
 
         override fun onQueryAppResult(installed: Boolean) {
