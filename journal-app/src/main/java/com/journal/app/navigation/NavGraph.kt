@@ -34,6 +34,12 @@ fun NavGraph() {
                 onSummaryClick = {
                     navController.navigate(Screen.Summary.route)
                 },
+                onSettingsClick = {
+                    navController.navigate(Screen.Settings.route)
+                },
+                onMatchClick = {
+                    navController.navigate(Screen.Match.route)
+                },
             )
         }
 
@@ -67,6 +73,7 @@ fun NavGraph() {
                 onFeedClick = {
                     navController.navigate(Screen.Feed.route)
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 

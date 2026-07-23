@@ -9,7 +9,7 @@ import com.rokid.cxr.link.CXRLink
  *
  * The phone-side app must register this in its AndroidManifest.xml.
  */
-class JournalApplication : Application() {
+open class JournalApplication : Application() {
 
     companion object {
         lateinit var instance: JournalApplication

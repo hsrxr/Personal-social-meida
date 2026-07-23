@@ -11,6 +11,7 @@ import com.journal.glasses.audio.GlassesAudioCapture
 import com.journal.glasses.keys.KeyAction
 import com.journal.glasses.keys.KeyReceiver
 import com.journal.glasses.keys.KeyType
+import com.journal.glasses.keys.toAction
 import com.journal.glasses.protocol.CapsProtocol
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
