@@ -52,7 +52,7 @@ fun TimelineEntryEntity.toDomain(tags: List<Tag> = emptyList()): TimelineEntry =
 
 fun DailyJournalEntity.toDomain(entries: List<TimelineEntry> = emptyList()): DailyJournal {
     val keywordList: List<String> = keywords?.let {
-        try { gson.fromJson(it, stringListType) } catch (_: Exception) { null }
+        runCatching { gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type) }.getOrNull()
     } ?: emptyList()
     return DailyJournal(
         date = LocalDate.parse(date),
@@ -92,7 +92,7 @@ fun Tag.toEntity(entryId: String): TagEntity = TagEntity(
 
 fun MatchEntity.toDomain(): MatchCard {
     val details: List<CommonDetail> = commonDetailsJson?.let {
-        try { gson.fromJson(it, commonDetailListType) } catch (_: Exception) { null }
+        runCatching { gson.fromJson<List<CommonDetail>>(it, object : TypeToken<List<CommonDetail>>() {}.type) }.getOrNull()
     } ?: emptyList()
     return MatchCard(
         id = id,

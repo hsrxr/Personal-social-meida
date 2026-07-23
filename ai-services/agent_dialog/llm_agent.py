@@ -120,9 +120,11 @@ class AgentDialogEngine:
     async def _generate_reply(self) -> str:
         """调用 LLM 生成对话回复。"""
         try:
+            # 构建完整消息列表（system prompt + 滑动窗口上下文）
+            full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + self.context[-6:]
             reply = await self.llm.complete(
                 system=SYSTEM_PROMPT,
-                messages=self.context[-6:],  # 滑动窗口：最近 6 轮
+                messages=full_messages,
                 max_tokens=self.settings.dialog_max_reply_tokens,
                 temperature=0.7,
             )

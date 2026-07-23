@@ -46,13 +46,21 @@ async def lifespan(app: FastAPI):
     _asr_client = ASRClient(settings)
     _tts_client = TTSClient(settings)
     _redis_client = RedisStreamClient(settings)
-    await _redis_client.connect()
-    _summarizer = DialogSummarizer(_redis_client)
+    try:
+        await _redis_client.connect()
+        _summarizer = DialogSummarizer(_redis_client)
+    except Exception:
+        logger.warning("Redis unavailable, running without message queue")
+        _summarizer = None
 
     logger.info("Agent Dialog service started on port %s", settings.app_port)
     yield
 
-    await _redis_client.close()
+    if _redis_client:
+        try:
+            await _redis_client.close()
+        except Exception:
+            pass
     logger.info("Agent Dialog service shut down")
 
 
@@ -100,7 +108,7 @@ async def text_dialog(user_id: str, payload: dict):
 
     # 如果对话结束，发布摘要到消息队列
     if response.is_final and response.summary:
-        await _summarizer.publish(user_id, response.summary)
+        await _publish_summary(user_id, response.summary)
         # 异步生成 TTS 音频（"已保存"）
         audio = await _tts_client.synthesize(response.text)
         # 生产环境应上传到 OSS，这里直接返回 base64 示意
@@ -121,7 +129,7 @@ async def end_dialog(user_id: str):
     engine = _get_or_create_engine(user_id)
     response = await engine.end_dialog()
 
-    if response.is_final and response.summary:
+    if response.is_final and response.summary and _summarizer:
         await _summarizer.publish(user_id, response.summary)
         import base64
         audio = await _tts_client.synthesize(response.text)
@@ -129,6 +137,15 @@ async def end_dialog(user_id: str):
 
     _remove_engine(user_id)
     return response
+
+
+async def _publish_summary(user_id: str, summary):
+    """安全发布摘要（Redis 不可用时跳过）。"""
+    if _summarizer and summary:
+        try:
+            await _summarizer.publish(user_id, summary)
+        except Exception:
+            logger.warning("Failed to publish summary (Redis unavailable)")
 
 
 # ──────────────────────────────────────
@@ -159,8 +176,7 @@ async def agent_chat_ws(ws: WebSocket, user_id: str):
 
             if msg_type == "end":
                 response = await engine.end_dialog()
-                if response.is_final and response.summary:
-                    await _summarizer.publish(user_id, response.summary)
+                await _publish_summary(user_id, response.summary)
                 await ws.send_json(response.model_dump())
                 break
 
@@ -180,7 +196,7 @@ async def agent_chat_ws(ws: WebSocket, user_id: str):
                             f"{base64.b64encode(tts_audio).decode()}"
                         )
                     else:
-                        await _summarizer.publish(user_id, response.summary)
+                        await _publish_summary(user_id, response.summary)
                     await ws.send_json(response.model_dump())
 
                     if response.is_final:
@@ -197,7 +213,7 @@ async def agent_chat_ws(ws: WebSocket, user_id: str):
                         f"{base64.b64encode(tts_audio).decode()}"
                     )
                 else:
-                    await _summarizer.publish(user_id, response.summary)
+                    await _publish_summary(user_id, response.summary)
                 await ws.send_json(response.model_dump())
 
                 if response.is_final:
@@ -207,8 +223,7 @@ async def agent_chat_ws(ws: WebSocket, user_id: str):
         logger.info("WebSocket disconnected: user=%s", user_id)
         # 断开连接 → 视为对话结束
         response = await engine.end_dialog()
-        if response.is_final and response.summary:
-            await _summarizer.publish(user_id, response.summary)
+        await _publish_summary(user_id, response.summary)
     finally:
         _asr_client.close_session(user_id)
         _remove_engine(user_id)

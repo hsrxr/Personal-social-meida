@@ -67,8 +67,8 @@ class LLMClient:
 
     async def complete(
         self,
-        system: str,
-        user: str,
+        system: str = "",
+        user: str = "",
         model: Optional[str] = None,
         messages: Optional[list[dict]] = None,
         max_tokens: int = 1024,
