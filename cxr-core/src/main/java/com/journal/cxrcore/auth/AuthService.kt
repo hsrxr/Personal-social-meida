@@ -2,6 +2,7 @@ package com.journal.cxrcore.auth
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Pair
 import com.rokid.sprite.aiapp.externalapp.auth.AuthResult
 import com.rokid.sprite.aiapp.externalapp.auth.AuthorizationHelper
 import com.rokid.sprite.aiapp.externalapp.auth.GlassPermission

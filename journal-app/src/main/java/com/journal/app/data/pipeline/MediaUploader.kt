@@ -78,7 +78,7 @@ class MediaUploader @Inject constructor(
      */
     fun scheduleCleanup() {
         val request = androidx.work.PeriodicWorkRequestBuilder<CleanupWorker>(
-            intervalHours = 24,
+            24, java.util.concurrent.TimeUnit.HOURS,
         )
             .addTag("cleanup_media")
             .build()

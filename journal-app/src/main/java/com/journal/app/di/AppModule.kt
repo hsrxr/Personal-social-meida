@@ -14,10 +14,10 @@ import com.journal.app.data.remote.ApiService
 import com.journal.app.data.remote.SyncManager
 import com.journal.app.data.repository.AiService
 import com.journal.app.data.repository.MatchRepository
-import com.journal.app.data.repository.MatchRepositoryImpl
 import com.journal.app.data.repository.TimelineRepository
-import com.journal.app.data.repository.TimelineRepositoryImpl
 import com.journal.app.data.repository.mock.MockAiService
+import com.journal.app.data.repository.mock.MockMatchRepository
+import com.journal.app.data.repository.mock.MockTimelineRepository
 import com.journal.cxrcore.command.CommandChannel
 import com.journal.cxrcore.pipeline.audio.AudioReceiver
 import com.journal.cxrcore.pipeline.photo.PhotoPipeline
@@ -160,16 +160,16 @@ object AppModule {
     )
 
     // ══════════════════════════════════════════
-    // Repositories (real Room-backed impls)
+    // Repositories — Mock implementations for standalone dev
     // ══════════════════════════════════════════
 
     @Provides
     @Singleton
-    fun provideTimelineRepository(impl: TimelineRepositoryImpl): TimelineRepository = impl
+    fun provideTimelineRepository(impl: MockTimelineRepository): TimelineRepository = impl
 
     @Provides
     @Singleton
-    fun provideMatchRepository(impl: MatchRepositoryImpl): MatchRepository = impl
+    fun provideMatchRepository(impl: MockMatchRepository): MatchRepository = impl
 
     @Provides
     @Singleton

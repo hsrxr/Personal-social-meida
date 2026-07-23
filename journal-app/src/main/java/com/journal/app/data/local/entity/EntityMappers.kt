@@ -13,6 +13,8 @@ import com.google.gson.reflect.TypeToken
 import java.time.LocalDate
 
 private val gson = Gson()
+private val stringListType = object : TypeToken<List<String>>() {}.type
+private val commonDetailListType = object : TypeToken<List<CommonDetail>>() {}.type
 
 // ── TimelineEntry <-> TimelineEntryEntity ──
 
@@ -50,7 +52,7 @@ fun TimelineEntryEntity.toDomain(tags: List<Tag> = emptyList()): TimelineEntry =
 
 fun DailyJournalEntity.toDomain(entries: List<TimelineEntry> = emptyList()): DailyJournal {
     val keywordList: List<String> = keywords?.let {
-        runCatching { gson.fromJson(it, object : TypeToken<List<String>>() {}.type) }.getOrNull()
+        try { gson.fromJson(it, stringListType) } catch (_: Exception) { null }
     } ?: emptyList()
     return DailyJournal(
         date = LocalDate.parse(date),
@@ -90,7 +92,7 @@ fun Tag.toEntity(entryId: String): TagEntity = TagEntity(
 
 fun MatchEntity.toDomain(): MatchCard {
     val details: List<CommonDetail> = commonDetailsJson?.let {
-        runCatching { gson.fromJson(it, object : TypeToken<List<CommonDetail>>() {}.type) }.getOrNull()
+        try { gson.fromJson(it, commonDetailListType) } catch (_: Exception) { null }
     } ?: emptyList()
     return MatchCard(
         id = id,
