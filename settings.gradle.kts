@@ -9,6 +9,8 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
     }
 }
 plugins {
@@ -17,6 +19,9 @@ plugins {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
         maven { url = uri("https://maven.rokid.com/repository/maven-public/") }
         google()
         mavenCentral()
@@ -24,4 +29,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "JournalCxr"
-include(":cxr-core", ":glasses-journal", ":sample-app")
+include(":cxr-core", ":glasses-journal", ":journal-app", ":sample-app")
