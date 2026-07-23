@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "JournalCxr"
-include(":cxr-core", ":glasses-journal", ":sample-app")
+include(":cxr-core", ":glasses-journal", ":sample-app", ":journal-app")

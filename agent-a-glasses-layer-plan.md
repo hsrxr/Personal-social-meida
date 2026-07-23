@@ -10,7 +10,7 @@
 
 ## 1. 参考代码分析（CXRLSample 工程）
 
-Agent-A 直接复刻 Sampl e(C:\Users\11150\Downloads\CXRLSample) 的架构模式，关键文件映射：
+Agent-A 直接复刻 Sample (C:\Users\11150\Downloads\CXRLSample) 的架构模式，关键文件映射：
 
 
 | Sample 源文件               | 对应本产品模块                       | 复用程度                                            |
