@@ -73,5 +73,17 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    // Retrofit + OkHttp
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.core)
+    implementation(libs.okhttp.logging)
+
+    // WorkManager
+    implementation(libs.workmanager.runtime)
+
+    // Gson
+    implementation(libs.gson)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

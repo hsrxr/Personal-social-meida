@@ -1,3 +1,21 @@
 .agents/
 .claude/
+docs/
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.local/
+
+# OS
+.DS_Store
+Thumbs.db
 

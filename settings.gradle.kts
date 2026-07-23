@@ -2,8 +2,8 @@ pluginManagement {
     repositories {
         google {
             content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("""com\.android.*""")
+                includeGroupByRegex("""com\.google.*""")
                 includeGroupByRegex("androidx.*")
             }
         }
@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "JournalCxr"
-include(":cxr-core", ":glasses-journal", ":sample-app", ":journal-app")
+include(":cxr-core", ":glasses-journal", ":sample-app")
