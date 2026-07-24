@@ -1,5 +1,9 @@
 package com.journal.app.ui.screen.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +48,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,12 +60,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.journal.app.data.model.EntryType
 import com.journal.app.data.model.TimelineEntry
 import com.journal.app.ui.components.GlassStatusBar
 import com.journal.app.ui.states.HomeUiState
+import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -79,6 +89,23 @@ fun HomeScreen(
     // Auto-connect on first composition
     LaunchedEffect(Unit) {
         viewModel.startAutoConnect(activity)
+    }
+
+    // ── Phone camera (system camera intent) ──
+    var photoFile by remember { mutableStateOf<File?>(null) }
+    val photoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && photoFile != null) {
+            viewModel.savePhonePhoto(photoFile!!.absolutePath)
+        }
+    }
+
+    // ── Phone audio recording permission ──
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) viewModel.startPhoneRecording()
     }
 
     Scaffold(
@@ -127,9 +154,18 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(end = 8.dp, bottom = 8.dp),
             ) {
-                // Capture photo button
+                // Capture photo button — uses system camera
                 SmallFloatingActionButton(
-                    onClick = { viewModel.capturePhoto() },
+                    onClick = {
+                        val file = viewModel.preparePhonePhotoFile()
+                        photoFile = file
+                        val uri = FileProvider.getUriForFile(
+                            activity,
+                            "${activity.packageName}.fileprovider",
+                            file,
+                        )
+                        photoLauncher.launch(uri)
+                    },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                 ) {
                     Icon(
@@ -137,11 +173,22 @@ fun HomeScreen(
                         contentDescription = "拍照",
                     )
                 }
-                // Record / Stop button
+                // Record / Stop button — uses phone mic
                 FloatingActionButton(
                     onClick = {
-                        if (uiState.isRecording) viewModel.stopRecording()
-                        else viewModel.startRecording()
+                        if (uiState.isRecording) {
+                            viewModel.stopPhoneRecording()
+                        } else {
+                            if (ContextCompat.checkSelfPermission(
+                                    activity,
+                                    Manifest.permission.RECORD_AUDIO,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                viewModel.startPhoneRecording()
+                            } else {
+                                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        }
                     },
                     containerColor = if (uiState.isRecording)
                         MaterialTheme.colorScheme.errorContainer

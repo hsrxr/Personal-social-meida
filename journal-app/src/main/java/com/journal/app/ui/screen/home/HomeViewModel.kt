@@ -1,9 +1,13 @@
 package com.journal.app.ui.screen.home
 
 import android.app.Application
+import android.media.MediaRecorder
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.journal.app.data.local.dao.EntryDao
+import com.journal.app.data.local.dao.JournalDao
+import com.journal.app.data.local.entity.TimelineEntryEntity
 import com.journal.app.data.pipeline.GlassesSetupManager
 import com.journal.app.data.pipeline.MaterialIngestion
 import com.journal.app.data.repository.TimelineRepository
@@ -21,7 +25,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +39,13 @@ class HomeViewModel @Inject constructor(
     private val commandChannel: CommandChannel,
     private val audioPipeline: AudioPipeline,
     private val photoPipeline: PhotoPipeline,
+    private val entryDao: EntryDao,
+    private val journalDao: JournalDao,
 ) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "HomeVM"
+    }
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -43,6 +55,10 @@ class HomeViewModel @Inject constructor(
     private var pipelinesReady = false
     private var autoConnectStarted = false
 
+    // Phone-side audio recording
+    private var phoneMediaRecorder: MediaRecorder? = null
+    private var phoneAudioFile: File? = null
+
     init {
         sessionManager.init(application)
         setupManager.init(application)
@@ -51,7 +67,7 @@ class HomeViewModel @Inject constructor(
         loadToday()
 
         setupManager.onStatus = { step, msg ->
-            Log.i("HomeVM", "[$step] $msg")
+            Log.i(TAG, "[$step] $msg")
             connectionLog.append("[$step] $msg\n")
             val lines = connectionLog.lines().takeLast(6)
             _uiState.update { it.copy(connectionStatus = lines.joinToString("\n")) }
@@ -87,9 +103,9 @@ class HomeViewModel @Inject constructor(
         val today = LocalDate.now()
         viewModelScope.launch {
             timelineRepository.getJournal(today).collect { journal ->
-                Log.i("HomeVM", "Journal updated: entries=${journal.entries.size} summary=${journal.summary?.take(30)}")
+                Log.i(TAG, "Journal updated: entries=${journal.entries.size} summary=${journal.summary?.take(30)}")
                 journal.entries.forEach { e ->
-                    Log.i("HomeVM", "  entry: id=${e.id} type=${e.type} imageUrl=${e.imageUrl?.take(60)}")
+                    Log.i(TAG, "  entry: id=${e.id} type=${e.type} imageUrl=${e.imageUrl?.take(60)}")
                 }
                 _uiState.update {
                     it.copy(
@@ -108,22 +124,92 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { timelineRepository.toggleStar(entryId) }
     }
 
-    // ── Manual capture controls (for on-phone trigger, bypassing glasses key events) ──
+    // ── Phone-side camera capture (uses system camera via ActivityResultLauncher in HomeScreen) ──
 
-    /** Take a photo through the glasses. Requires SessionBuilt. */
-    fun capturePhoto() {
-        Log.i("HomeVM", "capturePhoto: triggered from phone UI")
-        photoPipeline.capture()
+    /** Creates a temp file for the system camera to write into. */
+    fun preparePhonePhotoFile(): File {
+        val dir = File(application.cacheDir, "journal_photos")
+        dir.mkdirs()
+        return File(dir, "phone_${UUID.randomUUID()}.jpg")
     }
 
-    fun startRecording() {
-        Log.i("HomeVM", "startRecording: triggered from phone UI")
-        audioPipeline.start()
+    /** Called after the system camera saves a photo to [filePath]. */
+    fun savePhonePhoto(filePath: String) {
+        Log.i(TAG, "savePhonePhoto: path=$filePath")
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val date = LocalDate.now().toString()
+            val entity = TimelineEntryEntity(
+                id = UUID.randomUUID().toString(),
+                date = date,
+                timestamp = now,
+                type = "PHOTO",
+                source = "PHONE",
+                localPath = filePath,
+                createdAt = now,
+            )
+            entryDao.insert(entity)
+            journalDao.refreshEntryCount(date)
+        }
     }
 
-    fun stopRecording() {
-        Log.i("HomeVM", "stopRecording: triggered from phone UI")
-        audioPipeline.stop()
+    // ── Phone-side audio recording (uses phone mic directly) ──
+
+    fun startPhoneRecording() {
+        Log.i(TAG, "startPhoneRecording: using phone mic")
+        try {
+            val dir = File(application.cacheDir, "journal_audio")
+            dir.mkdirs()
+            phoneAudioFile = File(dir, "phone_${UUID.randomUUID()}.mp4")
+
+            phoneMediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(phoneAudioFile!!.absolutePath)
+                prepare()
+                start()
+            }
+            _uiState.update { it.copy(isRecording = true) }
+        } catch (e: Exception) {
+            Log.e(TAG, "startPhoneRecording failed", e)
+            phoneMediaRecorder = null
+            phoneAudioFile = null
+        }
+    }
+
+    fun stopPhoneRecording() {
+        Log.i(TAG, "stopPhoneRecording")
+        phoneMediaRecorder?.apply {
+            try { stop() } catch (e: Exception) { Log.e(TAG, "stopPhoneRecording: stop failed", e) }
+            release()
+        }
+        phoneMediaRecorder = null
+
+        val file = phoneAudioFile
+        if (file != null && file.exists()) {
+            val durationMs = (file.length() * 1000L / (16_000 * 2)).toInt()
+            viewModelScope.launch {
+                val now = System.currentTimeMillis()
+                val date = LocalDate.now().toString()
+                val entity = TimelineEntryEntity(
+                    id = UUID.randomUUID().toString(),
+                    date = date,
+                    timestamp = now,
+                    type = "AUDIO",
+                    source = "PHONE",
+                    localPath = file.absolutePath,
+                    durationMs = if (durationMs > 0) durationMs else null,
+                    createdAt = now,
+                )
+                entryDao.insert(entity)
+                journalDao.refreshEntryCount(date)
+            }
+        } else {
+            Log.w(TAG, "stopPhoneRecording: no audio file saved")
+        }
+        phoneAudioFile = null
+        _uiState.update { it.copy(isRecording = false) }
     }
 
     // ── Internal ──
@@ -169,11 +255,17 @@ class HomeViewModel @Inject constructor(
         commandChannel.init()
         audioPipeline.init()
         materialIngestion.start()
-        Log.i("HomeVM", "Pipelines initialized (photo/audio/command), ingestion started")
+        Log.i(TAG, "Pipelines initialized (photo/audio/command), ingestion started")
     }
 
     override fun onCleared() {
         super.onCleared()
         materialIngestion.stop()
+        // Clean up phone recorder if active
+        phoneMediaRecorder?.apply {
+            try { stop() } catch (_: Exception) {}
+            release()
+        }
+        phoneMediaRecorder = null
     }
 }
