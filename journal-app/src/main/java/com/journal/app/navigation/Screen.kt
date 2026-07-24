@@ -25,4 +25,10 @@ sealed class Screen(val route: String) {
     }
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
+
+    // ── Echoes bottom-nav destinations ──
+    data object Discover : Screen("discover")
+    data object Messages : Screen("messages")
+    data object FullJournal : Screen("full_journal")
+    data object FindSimilar : Screen("find_similar")
 }

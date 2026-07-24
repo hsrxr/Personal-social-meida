@@ -88,7 +88,7 @@ fun TimelineItem(
                     entry.thumbnailUrl?.let { url ->
                         AsyncImage(
                             model = url,
-                            contentDescription = "照片缩略图",
+                            contentDescription = "Photo thumbnail",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(120.dp)

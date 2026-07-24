@@ -15,10 +15,10 @@ class MockAiService @Inject constructor() : AiService {
         delay(1500) // simulate AI latency
         return Result.success(
             Summary(
-                keywords = listOf("咖啡", "望京", "桂花", "平静", "工作"),
-                narrative = "今天又是平凡但有趣的一天。上午在望京SOHO处理工作，中午路过楼下的咖啡店，闻到了今年第一缕桂花香。下午在公园跑步，晚上和朋友约了顿火锅。虽然很累但很充实。",
-                mood = "平静",
-                highlight = "在楼下咖啡店闻到了今年第一缕桂花香",
+                keywords = listOf("coffee", "wangjing", "osmanthus", "calm", "work"),
+                narrative = "Another ordinary but interesting day. Spent the morning at Wangjing SOHO handling work, then passed the coffee shop downstairs at lunch and caught the first whiff of osmanthus this year. Went for a run in the park in the afternoon, then met friends for hot pot in the evening. Exhausting but fulfilling.",
+                mood = "Calm",
+                highlight = "Caught the first scent of osmanthus this year at the coffee shop downstairs",
             )
         )
     }
@@ -30,13 +30,13 @@ class MockAiService @Inject constructor() : AiService {
                 SocialCopy(
                     id = "copy-wechat",
                     platform = SocialPlatform.WECHAT_MOMENTS,
-                    text = "今天的快乐是桂花味儿的 🍂\n在楼下闻到了今年第一缕桂花香，咖啡店老板说他也闻到了。秋天真的来了。",
+                    text = "Today's happiness smells like osmanthus 🍂\nCaught the first whiff of osmanthus this year at the coffee shop downstairs — the owner said he smelled it too. Autumn is really here.",
                     suggestedPhotoIds = listOf("entry-1"),
                 ),
                 SocialCopy(
                     id = "copy-xiaohongshu",
                     platform = SocialPlatform.XIAOHONGSHU,
-                    text = "🍂 今日份小确幸：第一缕桂花香！\n\n路过楼下咖啡店，突然闻到熟悉的桂花香～\n今年秋天比往年来得早一点？\n桂花拿铁意外好喝，安利给所有人！\n\n#桂花 #秋天 #咖啡店日常 #望京生活",
+                    text = "🍂 Today's little joy: first osmanthus of the year!\n\nWalked past the coffee shop downstairs and suddenly caught that familiar osmanthus scent~\nDid autumn arrive earlier than usual this year?\nThe osmanthus latte was surprisingly good — highly recommend!\n\n#osmanthus #autumn #coffeeshop #wangjinglife",
                     suggestedPhotoIds = listOf("entry-1", "entry-3"),
                 ),
                 SocialCopy(
@@ -55,7 +55,7 @@ class MockAiService @Inject constructor() : AiService {
             SocialCopy(
                 id = "copy-${platform.name}-v2",
                 platform = platform,
-                text = "尝一口秋天 🍂 桂花拿铁配桂花香，秋天的小仪式感～ #日常 #桂花",
+                text = "A taste of autumn 🍂 Osmanthus latte + osmanthus breeze — autumn's little ritual~ #daily #osmanthus",
             )
         )
     }

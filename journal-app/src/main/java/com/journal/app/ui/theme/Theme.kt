@@ -7,6 +7,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -31,27 +32,31 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Green40,
-    onPrimary = Green90,
-    primaryContainer = Green90,
-    onPrimaryContainer = Green10,
-    secondary = Amber40,
-    onSecondary = Amber80,
+    primary = Blue40,
+    onPrimary = Color.White,
+    primaryContainer = Blue90,
+    onPrimaryContainer = Blue30,
+    secondary = Blue40,
+    onSecondary = Color.White,
+    secondaryContainer = Blue90,
+    onSecondaryContainer = Blue30,
     tertiary = Sky40,
-    onTertiary = Sky80,
+    onTertiary = Color.White,
     error = ErrorRedDark,
-    onError = ErrorRed,
-    surface = Gray99,
-    onSurface = Gray10,
-    surfaceVariant = Gray95,
-    onSurfaceVariant = Gray30,
-    background = Gray99,
-    onBackground = Gray10,
+    onError = Color.White,
+    surface = NeutralSurface,
+    onSurface = OnNeutral,
+    surfaceVariant = NeutralSurfaceVariant,
+    onSurfaceVariant = OnNeutralVariant,
+    background = NeutralBackground,
+    onBackground = OnNeutral,
+    outline = NeutralOutline,
+    outlineVariant = NeutralOutline,
 )
 
 @Composable
 fun JournalTheme(
-    darkTheme: Boolean = true, // default dark: matches glasses usage context
+    darkTheme: Boolean = false, // default light: matches the Echoes phone-app mockup
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

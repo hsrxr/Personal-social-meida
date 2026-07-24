@@ -8,6 +8,10 @@ import java.time.LocalDate
 interface TimelineRepository {
     fun getJournal(date: LocalDate): Flow<DailyJournal>
     fun getJournals(range: ClosedRange<LocalDate>): Flow<List<DailyJournal>>
+
+    /** Daily journals across [range], each populated with its timeline entries, newest day first. */
+    fun getJournalsWithEntries(range: ClosedRange<LocalDate>): Flow<List<DailyJournal>>
+
     fun getEntries(date: LocalDate): Flow<List<TimelineEntry>>
     suspend fun getEntry(entryId: String): TimelineEntry?
     suspend fun addEntry(entry: TimelineEntry): String

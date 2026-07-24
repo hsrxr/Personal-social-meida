@@ -13,6 +13,9 @@ interface EntryDao {
     @Query("SELECT * FROM timeline_entries WHERE date = :date ORDER BY timestamp ASC")
     fun getEntries(date: String): Flow<List<TimelineEntryEntity>>
 
+    @Query("SELECT * FROM timeline_entries WHERE date BETWEEN :from AND :to ORDER BY timestamp DESC")
+    fun getEntriesInRange(from: String, to: String): Flow<List<TimelineEntryEntity>>
+
     @Query("SELECT * FROM timeline_entries WHERE id = :id LIMIT 1")
     suspend fun getById(id: String): TimelineEntryEntity?
 

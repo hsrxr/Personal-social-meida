@@ -17,7 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,21 +55,21 @@ fun AnnotateScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedMood by remember { mutableStateOf<String?>(null) }
     var noteText by remember { mutableStateOf("") }
-    val moods = listOf("开心", "平静", "烦躁", "兴奋", "疲惫", "中性")
-    val suggestedTags = listOf("咖啡", "桂花", "望京", "探店", "工作日")
+    val moods = listOf("Happy", "Calm", "Irritated", "Excited", "Tired", "Neutral")
+    val suggestedTags = listOf("coffee", "osmanthus", "wangjing", "cafe-hopping", "weekday")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("编辑细节") },
+                title = { Text("Edit Details") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = onSaved) {
-                        Icon(Icons.Default.Check, contentDescription = "保存")
+                        Icon(Icons.Default.Check, contentDescription = "Save")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -99,7 +99,7 @@ fun AnnotateScreen(
                 if (imageUrl != null) {
                     AsyncImage(
                         model = imageUrl,
-                        contentDescription = "日志照片",
+                        contentDescription = "Journal photo",
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(4f / 3f)
@@ -113,7 +113,7 @@ fun AnnotateScreen(
 
             // Note
             Text(
-                text = "备注",
+                text = "Note",
                 style = MaterialTheme.typography.titleSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -124,14 +124,14 @@ fun AnnotateScreen(
                     .fillMaxWidth()
                     .height(120.dp),
                 shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("添加一点备注...") },
+                placeholder = { Text("Add a note…") },
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             // Suggested tags
             Text(
-                text = "标签",
+                text = "Tags",
                 style = MaterialTheme.typography.titleSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -152,7 +152,7 @@ fun AnnotateScreen(
 
             // Mood selector
             Text(
-                text = "情绪",
+                text = "Mood",
                 style = MaterialTheme.typography.titleSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -176,7 +176,7 @@ fun AnnotateScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {
-                Text("保存")
+                Text("Save")
             }
 
             Spacer(modifier = Modifier.height(80.dp))

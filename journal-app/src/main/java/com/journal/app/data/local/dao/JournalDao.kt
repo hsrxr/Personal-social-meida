@@ -16,6 +16,9 @@ interface JournalDao {
     @Query("SELECT * FROM daily_journals WHERE date BETWEEN :from AND :to ORDER BY date DESC")
     fun getJournals(from: String, to: String): Flow<List<DailyJournalEntity>>
 
+    @Query("SELECT COUNT(*) FROM daily_journals")
+    suspend fun count(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(journal: DailyJournalEntity)
 

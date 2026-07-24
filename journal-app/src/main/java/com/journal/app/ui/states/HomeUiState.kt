@@ -1,6 +1,8 @@
 package com.journal.app.ui.states
 
+import com.journal.app.data.model.DailyJournal
 import com.journal.app.data.model.TimelineEntry
+import com.journal.app.data.model.UserProfile
 import com.journal.cxrcore.link.LinkState
 import java.time.LocalDate
 
@@ -10,6 +12,9 @@ data class HomeUiState(
     val entries: List<TimelineEntry> = emptyList(),
     val summaryPreview: String? = null,
     val mood: String? = null,
+    // Echoes profile header + timeline
+    val profile: UserProfile? = null,
+    val recentJournals: List<DailyJournal> = emptyList(),
     // Glasses connection state
     val glassLinkState: LinkState = LinkState.Idle,
     val glassConnected: Boolean = false,
@@ -21,3 +26,4 @@ data class HomeUiState(
     // Recording state
     val isRecording: Boolean = false,
 )
+

@@ -62,7 +62,7 @@ class GlassesSetupManager(
      */
     suspend fun start(activity: Activity): Boolean = withContext(Dispatchers.Main) {
         if (sessionManager.linkState.value == LinkState.SessionBuilt) {
-            report("完成", "眼镜已连接")
+            report("done", "Glasses connected")
             return@withContext true
         }
 
@@ -81,7 +81,7 @@ class GlassesSetupManager(
         // Step 5
         if (!startGlasses()) return@withContext false
 
-        report("完成", "🎉 眼镜已连接，开始记录")
+        report("done", "🎉 Glasses connected, starting capture")
         true
     }
 
@@ -103,20 +103,20 @@ class GlassesSetupManager(
     // ── Steps ──
 
     private fun checkRokidApp(activity: Activity): Boolean {
-        report("检测", "检测 Rokid AI 应用...")
+        report("check", "Checking for Rokid AI app…")
         val ok = AuthService.isRokidAppInstalled(activity) || AuthService.isHiRokidInstalled(activity)
-        report("检测", if (ok) "Rokid AI 应用已安装 ✅" else "未安装 Rokid AI 应用，请先安装")
+        report("check", if (ok) "Rokid AI app installed ✅" else "Rokid AI app not found — please install it first")
         return ok
     }
 
     private suspend fun getOrRequestToken(activity: Activity): String? {
         val cached = prefs.getString(KEY_TOKEN, null)
         if (!cached.isNullOrBlank()) {
-            report("鉴权", "使用已保存的 token ✅")
+            report("auth", "Using saved token ✅")
             return cached
         }
 
-        report("鉴权", "请求授权...")
+        report("auth", "Requesting authorization…")
         val immediate = AuthService.requestAuth(
             activity,
             arrayOf(GlassPermission.MICROPHONE, GlassPermission.CAMERA, GlassPermission.MEDIA),
@@ -126,15 +126,15 @@ class GlassesSetupManager(
             val res = AuthService.parseAuthResult(immediate.first, immediate.second)
             if (res is AuthResult.AuthSuccess) {
                 prefs.edit().putString(KEY_TOKEN, res.token).apply()
-                report("鉴权", "鉴权成功 ✅")
+                report("auth", "Authorization successful ✅")
                 return res.token
             }
-            report("鉴权", "鉴权失败")
+            report("auth", "Authorization failed")
             return null
         }
 
         // Auth UI launched — wait for user
-        report("鉴权", "请在弹窗中授权...")
+        report("auth", "Please authorize in the popup…")
         onAuthRequired?.invoke()
         authDeferred = CompletableDeferred()
         val token = authDeferred!!.await()
@@ -144,14 +144,14 @@ class GlassesSetupManager(
     private suspend fun connectToGlasses(token: String): Boolean {
         val ls = sessionManager.linkState.value
         if (ls == LinkState.LinkReady || ls == LinkState.SessionBuilt) {
-            report("连接", "已连接 ✅")
+            report("connect", "Already connected ✅")
             return true
         }
 
-        report("连接", "正在连接眼镜...")
+        report("connect", "Connecting to glasses…")
         val res = sessionManager.connect(token)
         if (res.isFailure) {
-            report("连接", "连接失败: ${res.exceptionOrNull()?.message}")
+            report("connect", "Connection failed: ${res.exceptionOrNull()?.message}")
             return false
         }
 
@@ -162,17 +162,17 @@ class GlassesSetupManager(
             }.first()
         }
         if (state == null || state == LinkState.Disconnected) {
-            report("连接", "等待 LinkReady 超时")
+            report("connect", "Timed out waiting for LinkReady")
             return false
         }
-        report("连接", "链路就绪 ✅")
+        report("connect", "Link ready ✅")
         return true
     }
 
     private suspend fun ensureGlassesAppInstalled(): Boolean {
         val apk = File(GLASSES_APK_PATH)
         if (!apk.exists() || !apk.canRead()) {
-            report("安装", "找不到眼镜 APK: $GLASSES_APK_PATH")
+            report("install", "Glasses APK not found: $GLASSES_APK_PATH")
             return false
         }
 
@@ -180,11 +180,11 @@ class GlassesSetupManager(
         val currentVersion = apk.lastModified()
 
         if (savedVersion == currentVersion && sessionManager.appInstalled.value) {
-            report("安装", "眼镜 App 已是最新版本，跳过安装 ✅")
+            report("install", "Glasses app is up to date, skipping install ✅")
             return true
         }
 
-        report("安装", "正在安装眼镜 App (${apk.length() / 1024}KB)...")
+        report("install", "Installing glasses app (${apk.length() / 1024}KB)…")
         sessionManager.installGlassesApp(apk.absolutePath)
 
         // Wait for install callback
@@ -192,22 +192,22 @@ class GlassesSetupManager(
             sessionManager.appInstalled.filter { it }.first()
         }
         if (ok != true) {
-            report("安装", "安装超时")
+            report("install", "Install timed out")
             return false
         }
 
         prefs.edit().putLong(KEY_GLASSES_APK_VERSION, currentVersion).apply()
-        report("安装", "安装完成 ✅")
+        report("install", "Install complete ✅")
         return true
     }
 
     private suspend fun startGlasses(): Boolean {
         if (sessionManager.appOpened.value) {
-            report("启动", "眼镜 App 已在运行 ✅")
+            report("launch", "Glasses app already running ✅")
             return true
         }
 
-        report("启动", "正在启动眼镜 App...")
+        report("launch", "Launching glasses app…")
         sessionManager.startGlassesApp()
 
         val state = withTimeoutOrNull(TIMEOUT_SESSION_MS) {
@@ -216,10 +216,10 @@ class GlassesSetupManager(
             }.first()
         }
         if (state != LinkState.SessionBuilt) {
-            report("启动", "启动超时")
+            report("launch", "Launch timed out")
             return false
         }
-        report("启动", "眼镜 App 运行中 ✅")
+        report("launch", "Glasses app running ✅")
         return true
     }
 
