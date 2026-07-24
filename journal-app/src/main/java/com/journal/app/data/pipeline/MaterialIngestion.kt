@@ -182,7 +182,7 @@ class MaterialIngestion @Inject constructor(
             "agent_talk_start" -> {
                 // Auto-start audio streaming via SDK API
                 Log.i(TAG, "Auto-starting audio from agent_talk_start")
-                audioPipeline.start()
+                audioPipeline.start(enableVad = false)
                 "AGENT_DIALOG"
             }
             "agent_talk_stop" -> {
@@ -193,7 +193,7 @@ class MaterialIngestion @Inject constructor(
             }
             "quick_note_start" -> {
                 Log.i(TAG, "Auto-starting audio from quick_note_start")
-                audioPipeline.start()
+                audioPipeline.start(enableVad = true)
                 "AUDIO"
             }
             else -> {

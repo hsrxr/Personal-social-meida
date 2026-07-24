@@ -26,6 +26,8 @@ class AudioPipeline {
     companion object {
         private const val TAG = "AudioPipeline"
         private const val SAMPLE_RATE = 16_000
+        private const val SILENCE_THRESHOLD = 500
+        private const val VAD_TIMEOUT_MS = 1500L
     }
 
     private val _audioChunkFlow = MutableSharedFlow<AudioChunk>(extraBufferCapacity = 2)
@@ -40,6 +42,10 @@ class AudioPipeline {
     private val pcmBuffer = ByteArrayOutputStream()
     private var chunkStartTimeMs: Long = 0L
     private var initialized = false
+
+    // VAD tracking
+    private var isVadEnabled = false
+    private var silenceDurationMs = 0L
 
     private val audioCallback = object : IAudioStreamCbk {
         override fun onAudioReceived(data: ByteArray?, offset: Int, length: Int) {
@@ -61,6 +67,23 @@ class AudioPipeline {
                     chunkStartTimeMs = System.currentTimeMillis()
                 }
                 pcmBuffer.write(data, safeOffset, safeLength)
+
+                if (isVadEnabled) {
+                    val isSilent = isSilent(data, safeOffset, safeLength)
+                    if (isSilent) {
+                        val duration = (safeLength * 1000L) / (SAMPLE_RATE * 2)
+                        silenceDurationMs += duration
+                        if (silenceDurationMs >= VAD_TIMEOUT_MS) {
+                            Log.i(TAG, "VAD: silence detected for >${VAD_TIMEOUT_MS}ms, auto-stopping.")
+                            // Avoid deadlock by posting stop() outside the synchronized block
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                stop()
+                            }
+                        }
+                    } else {
+                        silenceDurationMs = 0L
+                    }
+                }
             }
         }
 
@@ -94,8 +117,9 @@ class AudioPipeline {
     /**
      * Starts audio capture from glasses. The audio data accumulates in the internal
      * buffer and is emitted as a complete [AudioChunk] when [stop] is called.
+     * @param enableVad If true, recording will auto-stop after 1.5s of silence.
      */
-    fun start() {
+    fun start(enableVad: Boolean = false) {
         val link = readyLink() ?: return
         if (!_permissionGranted.value) {
             Log.w(TAG, "start: microphone permission not granted on glasses")
@@ -104,9 +128,11 @@ class AudioPipeline {
         synchronized(pcmBuffer) {
             pcmBuffer.reset()
             chunkStartTimeMs = System.currentTimeMillis()
+            isVadEnabled = enableVad
+            silenceDurationMs = 0L
         }
         val result = link.startAudioStream(1) // codecType=1 for PCM
-        Log.d(TAG, "startAudioStream: result=$result")
+        Log.d(TAG, "startAudioStream: result=$result, vad=$enableVad")
         _isActive.value = result
     }
 
@@ -148,6 +174,18 @@ class AudioPipeline {
         runCatching { link.stopAudioStream() }
         _isActive.value = false
         initialized = false
+    }
+
+    private fun isSilent(data: ByteArray, offset: Int, length: Int): Boolean {
+        if (length < 2) return true
+        var sum = 0L
+        val limit = offset + length - 1
+        for (i in offset until limit step 2) {
+            val sample = ((data[i + 1].toInt() shl 8) or (data[i].toInt() and 0xFF)).toShort()
+            sum += (sample * sample).toLong()
+        }
+        val rms = kotlin.math.sqrt(sum.toDouble() / (length / 2))
+        return rms < SILENCE_THRESHOLD
     }
 
     private fun readyLink(): CXRLink? =
