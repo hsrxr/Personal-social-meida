@@ -67,7 +67,7 @@ class SettingsViewModel @Inject constructor(
             applyAuthResult(AuthService.parseAuthResult(result.first, result.second))
         } else {
             // Auth UI launched; result will come via onActivityResult
-            _uiState.update { it.copy(statusMessage = "请在弹窗中授权...") }
+            _uiState.update { it.copy(statusMessage = "Please authorize in the popup…") }
         }
     }
 
@@ -83,18 +83,18 @@ class SettingsViewModel @Inject constructor(
                     it.copy(
                         authDone = result.token.isNotBlank(),
                         authToken = result.token,
-                        statusMessage = "鉴权成功",
+                        statusMessage = "Authorization successful",
                     )
                 }
             }
             is AuthResult.AuthFail -> {
                 _uiState.update {
-                    it.copy(statusMessage = "鉴权失败")
+                    it.copy(statusMessage = "Authorization failed")
                 }
             }
             is AuthResult.AuthCancel -> {
                 _uiState.update {
-                    it.copy(statusMessage = "鉴权取消")
+                    it.copy(statusMessage = "Authorization cancelled")
                 }
             }
         }
@@ -105,34 +105,34 @@ class SettingsViewModel @Inject constructor(
     fun connectGlasses() {
         val token = _uiState.value.authToken
         if (token == null) {
-            _uiState.update { it.copy(statusMessage = "请先完成鉴权") }
+            _uiState.update { it.copy(statusMessage = "Please complete authorization first") }
             return
         }
-        _uiState.update { it.copy(isConnecting = true, statusMessage = "连接中...") }
+        _uiState.update { it.copy(isConnecting = true, statusMessage = "Connecting…") }
         viewModelScope.launch {
             sessionManager.connect(token)
                 .onSuccess {
-                    _uiState.update { it.copy(isConnecting = false, statusMessage = "连接成功，等待链路就绪...") }
+                    _uiState.update { it.copy(isConnecting = false, statusMessage = "Connected, waiting for link…") }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(isConnecting = false, statusMessage = "连接失败: ${e.message}") }
+                    _uiState.update { it.copy(isConnecting = false, statusMessage = "Connection failed: ${e.message}") }
                 }
         }
     }
 
     fun disconnectGlasses() {
         sessionManager.disconnect()
-        _uiState.update { it.copy(statusMessage = "已断开") }
+        _uiState.update { it.copy(statusMessage = "Disconnected") }
     }
 
     // ── Step 3: Install glasses app ──
 
     fun installGlassesApp(apkPath: String) {
         if (_uiState.value.linkState != LinkState.LinkReady) {
-            _uiState.update { it.copy(statusMessage = "请先建立链路 (LinkReady)") }
+            _uiState.update { it.copy(statusMessage = "Please establish a link first (LinkReady)") }
             return
         }
-        _uiState.update { it.copy(installing = true, statusMessage = "安装中...") }
+        _uiState.update { it.copy(installing = true, statusMessage = "Installing…") }
         sessionManager.installGlassesApp(apkPath)
     }
 
@@ -140,7 +140,7 @@ class SettingsViewModel @Inject constructor(
 
     fun startGlassesApp() {
         if (_uiState.value.linkState != LinkState.LinkReady) {
-            _uiState.update { it.copy(statusMessage = "请先建立链路 (LinkReady)") }
+            _uiState.update { it.copy(statusMessage = "Please establish a link first (LinkReady)") }
             return
         }
         sessionManager.startGlassesApp()
@@ -168,11 +168,11 @@ class SettingsViewModel @Inject constructor(
                     deviceName = glass.deviceName,
                     wearing = glass.wearing,
                     statusMessage = when (link) {
-                        LinkState.Idle -> "待连接"
-                        LinkState.Connecting -> "连接中..."
-                        LinkState.LinkReady -> if (installed) "链路就绪，可启动眼镜App" else "链路就绪，请安装眼镜App"
-                        LinkState.SessionBuilt -> "眼镜App运行中 ✅"
-                        LinkState.Disconnected -> "已断开"
+                        LinkState.Idle -> "Idle"
+                        LinkState.Connecting -> "Connecting…"
+                        LinkState.LinkReady -> if (installed) "Link ready — launch glasses app" else "Link ready — install glasses app"
+                        LinkState.SessionBuilt -> "Glasses app running ✅"
+                        LinkState.Disconnected -> "Disconnected"
                     },
                 )
             }.collect { state ->

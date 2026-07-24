@@ -39,7 +39,7 @@ fun TagEditor(
 
     Column(modifier = modifier) {
         Text(
-            text = "标签",
+            text = "Tags",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -57,7 +57,7 @@ fun TagEditor(
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "移除标签",
+                            contentDescription = "Remove tag",
                             // 45° rotation would indicate "remove" — using Add as close approximation
                         )
                     },
@@ -79,7 +79,7 @@ fun TagEditor(
                 OutlinedTextField(
                     value = newTagText,
                     onValueChange = { newTagText = it },
-                    placeholder = { Text("输入标签名") },
+                    placeholder = { Text("Tag name") },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     trailingIcon = {
@@ -92,7 +92,7 @@ fun TagEditor(
                                     showInput = false
                                 }
                             },
-                            label = { Text("添加") },
+                            label = { Text("Add") },
                         )
                     },
                 )
@@ -101,7 +101,7 @@ fun TagEditor(
             FilterChip(
                 selected = false,
                 onClick = { showInput = true },
-                label = { Text("+ 添加标签") },
+                label = { Text("+ Add tag") },
                 modifier = Modifier.padding(top = 4.dp),
             )
         }

@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -51,10 +51,10 @@ fun MatchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("今日共鸣") },
+                title = { Text("Today's Echoes") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -71,7 +71,7 @@ fun MatchScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "今天的共鸣还在路上...\n明天再来看看吧",
+                    text = "No echoes yet today…\nCheck back tomorrow",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -86,7 +86,7 @@ fun MatchScreen(
             ) {
                 item {
                     Text(
-                        text = "今日共鸣 (${uiState.dailyMatches.size})",
+                        text = "Today's Echoes (${uiState.dailyMatches.size})",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp),
                     )
@@ -134,10 +134,10 @@ fun MatchCardItem(
             // Common details
             match.commonDetails.forEach { detail ->
                 val label = when (detail.type) {
-                    "location" -> "同一个地点"
-                    "mood" -> "同一种情绪"
-                    "tag" -> "共同标签"
-                    "activity" -> "共同活动"
+                    "location" -> "Same location"
+                    "mood" -> "Same mood"
+                    "tag" -> "Shared tag"
+                    "activity" -> "Shared activity"
                     else -> detail.type
                 }
                 Text(
@@ -176,7 +176,7 @@ fun MatchCardItem(
                     onClick = onSkip,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("跳过")
+                    Text("Skip")
                 }
                 Button(
                     onClick = {
@@ -188,7 +188,7 @@ fun MatchCardItem(
                         containerColor = MaterialTheme.colorScheme.primary,
                     ),
                 ) {
-                    Text("打招呼")
+                    Text("Say Hi")
                 }
             }
         }

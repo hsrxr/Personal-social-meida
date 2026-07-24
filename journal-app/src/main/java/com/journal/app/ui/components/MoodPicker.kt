@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 enum class Mood(val emoji: String, val label: String) {
-    HAPPY("😊", "开心"),
-    CALM("😌", "平静"),
-    ANGRY("😤", "生气"),
-    SAD("😢", "难过"),
-    LOVED("🥰", "心动"),
-    THINKING("🤔", "思考"),
+    HAPPY("😊", "Happy"),
+    CALM("😌", "Calm"),
+    ANGRY("😤", "Angry"),
+    SAD("😢", "Sad"),
+    LOVED("🥰", "Loved"),
+    THINKING("🤔", "Thinking"),
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -34,7 +34,7 @@ fun MoodPicker(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "情绪",
+            text = "Mood",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(bottom = 8.dp),
         )

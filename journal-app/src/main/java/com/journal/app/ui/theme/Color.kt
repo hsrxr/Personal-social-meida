@@ -34,3 +34,17 @@ val ErrorRed = Color(0xFFFFB4AB)
 val ErrorRedDark = Color(0xFF690005)
 val SurfaceDark = Color(0xFF111318)
 val SurfaceVariantDark = Color(0xFF242629)
+
+// ── Echoes blue palette (light theme — matches UI mockup) ──
+val Blue40 = Color(0xFF1B6FF3)  // primary: buttons, active nav, links, match %
+val Blue30 = Color(0xFF0B4FBF)  // pressed / on-container text
+val Blue90 = Color(0xFFDDE8FD)  // light container: chips, waveform track, nav indicator
+val Blue95 = Color(0xFFEEF3FE)  // subtle blue tint
+
+// ── Echoes light neutrals ──
+val NeutralBackground = Color(0xFFF2F3F5)     // screen background
+val NeutralSurface = Color(0xFFFFFFFF)        // cards, top bar, bottom bar
+val NeutralSurfaceVariant = Color(0xFFEEF1F4) // avatars, inactive fills, waveform bg
+val NeutralOutline = Color(0xFFE5E7EB)        // dividers, borders
+val OnNeutral = Color(0xFF16181C)             // primary text
+val OnNeutralVariant = Color(0xFF6B7280)      // secondary text

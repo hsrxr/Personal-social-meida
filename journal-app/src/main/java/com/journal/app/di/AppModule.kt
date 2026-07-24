@@ -13,11 +13,19 @@ import com.journal.app.data.pipeline.MediaUploader
 import com.journal.app.data.remote.ApiService
 import com.journal.app.data.remote.SyncManager
 import com.journal.app.data.repository.AiService
+import com.journal.app.data.repository.FeedRepository
 import com.journal.app.data.repository.MatchRepository
+import com.journal.app.data.repository.MessagesRepository
+import com.journal.app.data.repository.ProfileRepository
+import com.journal.app.data.repository.SearchRepository
 import com.journal.app.data.repository.TimelineRepository
 import com.journal.app.data.repository.TimelineRepositoryImpl
 import com.journal.app.data.repository.mock.MockAiService
+import com.journal.app.data.repository.mock.MockFeedRepository
 import com.journal.app.data.repository.mock.MockMatchRepository
+import com.journal.app.data.repository.mock.MockMessagesRepository
+import com.journal.app.data.repository.mock.MockProfileRepository
+import com.journal.app.data.repository.mock.MockSearchRepository
 import com.journal.cxrcore.command.CommandChannel
 import com.journal.cxrcore.pipeline.audio.AudioPipeline
 import com.journal.cxrcore.pipeline.photo.PhotoPipeline
@@ -174,4 +182,20 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAiService(service: MockAiService): AiService = service
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(impl: MockProfileRepository): ProfileRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideFeedRepository(impl: MockFeedRepository): FeedRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideMessagesRepository(impl: MockMessagesRepository): MessagesRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideSearchRepository(impl: MockSearchRepository): SearchRepository = impl
 }

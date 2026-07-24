@@ -97,9 +97,9 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
                 DailyJournal(
                     date = date,
                     entries = if (offset >= -2) generateEntries(date) else emptyList(),
-                    summary = if (offset == 0) "今天又是平凡但有趣的一天。上午在望京SOHO处理工作，中午路过楼下的咖啡店，闻到了今年第一缕桂花香。下午在公园跑了5公里。晚上和朋友约了火锅。" else null,
-                    keywords = if (offset == 0) listOf("咖啡", "望京", "桂花", "平静", "工作") else emptyList(),
-                    mood = if (offset == 0) "平静" else null,
+                    summary = if (offset == 0) "Another ordinary but interesting day. Spent the morning at Wangjing SOHO handling work, then caught the first whiff of osmanthus this year at the coffee shop downstairs. Ran 5 km in the park in the afternoon. Met friends for hot pot in the evening." else null,
+                    keywords = if (offset == 0) listOf("coffee", "wangjing", "osmanthus", "calm", "work") else emptyList(),
+                    mood = if (offset == 0) "Calm" else null,
                     entryCount = if (offset >= -2) 4 else 0,
                 )
             }
@@ -115,20 +115,20 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
                     type = EntryType.PHOTO,
                     imageUrl = "https://picsum.photos/seed/${date}1/800/600",
                     thumbnailUrl = "https://picsum.photos/seed/${date}1/200/150",
-                    locationName = "望京SOHO",
-                    tags = listOf(Tag(name = "望京", type = TagType.LOCATION)),
+                    locationName = "Wangjing SOHO",
+                    tags = listOf(Tag(name = "wangjing", type = TagType.LOCATION)),
                 ),
                 TimelineEntry(
                     id = "entry-${date}-2",
                     date = date,
                     timestamp = baseTime + 4 * 60 * 60 * 1000 + 18 * 60 * 1000, // 12:18
                     type = EntryType.AUDIO,
-                    transcription = "路过咖啡店闻到桂花香，秋天真的来了。买了杯桂花拿铁，很好喝。",
+                    transcription = "Walked past the coffee shop and caught the osmanthus scent — autumn is really here. Got an osmanthus latte, really good.",
                     durationMs = 12000,
-                    locationName = "望京咖啡店",
+                    locationName = "Wangjing Coffee",
                     tags = listOf(
-                        Tag(name = "咖啡", type = TagType.ACTIVITY),
-                        Tag(name = "桂花", type = TagType.AI_SUGGESTED),
+                        Tag(name = "coffee", type = TagType.ACTIVITY),
+                        Tag(name = "osmanthus", type = TagType.AI_SUGGESTED),
                     ),
                 ),
                 TimelineEntry(
@@ -138,13 +138,13 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
                     type = EntryType.MOMENT_MARK,
                     imageUrl = "https://picsum.photos/seed/${date}3/800/600",
                     thumbnailUrl = "https://picsum.photos/seed/${date}3/200/150",
-                    noteText = "桂花拿铁意外地好喝",
-                    locationName = "望京咖啡店",
+                    noteText = "The osmanthus latte was surprisingly good",
+                    locationName = "Wangjing Coffee",
                     isStarred = true,
                     tags = listOf(
-                        Tag(name = "重要时刻", type = TagType.MOOD),
-                        Tag(name = "桂花", type = TagType.AI_SUGGESTED),
-                        Tag(name = "探店", type = TagType.ACTIVITY),
+                        Tag(name = "highlight", type = TagType.MOOD),
+                        Tag(name = "osmanthus", type = TagType.AI_SUGGESTED),
+                        Tag(name = "cafe-hopping", type = TagType.ACTIVITY),
                     ),
                 ),
                 TimelineEntry(
@@ -152,8 +152,8 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
                     date = date,
                     timestamp = baseTime + 6 * 60 * 60 * 1000, // 14:00
                     type = EntryType.AGENT_DIALOG,
-                    transcription = "今天聊了周末计划，想去爬山。提到了上次去香山的经历，觉得秋天是最适合爬山的季节。",
-                    locationName = "望京SOHO",
+                    transcription = "Chatted about weekend plans — thinking of hiking. Mentioned the last trip to Fragrant Hills; autumn really is the best season for it.",
+                    locationName = "Wangjing SOHO",
                 ),
             )
         }

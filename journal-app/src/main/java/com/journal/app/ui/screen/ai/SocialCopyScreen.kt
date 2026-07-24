@@ -13,7 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -58,10 +58,10 @@ fun SocialCopyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("社交文案") },
+                title = { Text("Social Copy") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -84,8 +84,8 @@ fun SocialCopyScreen(
             ) {
                 SocialPlatform.entries.forEach { platform ->
                     val label = when (platform) {
-                        SocialPlatform.WECHAT_MOMENTS -> "朋友圈"
-                        SocialPlatform.XIAOHONGSHU -> "小红书"
+                        SocialPlatform.WECHAT_MOMENTS -> "Moments"
+                        SocialPlatform.XIAOHONGSHU -> "Xiaohongshu"
                         SocialPlatform.INSTAGRAM -> "Instagram"
                     }
                     FilterChip(
@@ -127,14 +127,14 @@ fun SocialCopyScreen(
                             clipboard.setText(AnnotatedString(currentCopy.text))
                         },
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "复制")
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
                     }
                     IconButton(
                         onClick = {
                             viewModel.regenerateCopy(selectedPlatform)
                         },
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "换一版")
+                        Icon(Icons.Default.Refresh, contentDescription = "Regenerate")
                     }
                 }
             }

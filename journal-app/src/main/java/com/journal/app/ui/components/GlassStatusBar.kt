@@ -37,11 +37,11 @@ fun GlassStatusBar(
     )
 
     val statusText = when (linkState) {
-        LinkState.Idle -> "眼镜未连接"
-        LinkState.Connecting -> "连接中..."
-        LinkState.LinkReady -> "链路就绪"
-        LinkState.SessionBuilt -> "眼镜已连接"
-        LinkState.Disconnected -> "已断开"
+        LinkState.Idle -> "Glasses not connected"
+        LinkState.Connecting -> "Connecting…"
+        LinkState.LinkReady -> "Link ready"
+        LinkState.SessionBuilt -> "Glasses connected"
+        LinkState.Disconnected -> "Disconnected"
     }
 
     Row(
@@ -68,7 +68,7 @@ fun GlassStatusBar(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Default.BatteryFull,
-                contentDescription = "电量",
+                contentDescription = "Battery",
                 tint = tint,
                 modifier = Modifier.size(16.dp),
             )

@@ -87,7 +87,7 @@ fun MatchCardView(
                     onClick = onSkip,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("跳过")
+                    Text("Skip")
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Button(
@@ -97,7 +97,7 @@ fun MatchCardView(
                         containerColor = MaterialTheme.colorScheme.primary,
                     ),
                 ) {
-                    Text("打招呼")
+                    Text("Say Hi")
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = null,
@@ -118,9 +118,9 @@ private fun String.toIcon() = when (this) {
 }
 
 private fun CommonDetail.toDisplayText(): String = when (type) {
-    "location" -> "你们今天都在 $value"
-    "mood" -> "都标记了\"$value\"情绪"
-    "tag" -> "共同标签: #$value"
-    "activity" -> "都做了: $value"
+    "location" -> "You were both at $value today"
+    "mood" -> "You both logged \"$value\" mood"
+    "tag" -> "Shared tag: #$value"
+    "activity" -> "You both did: $value"
     else -> value
 }

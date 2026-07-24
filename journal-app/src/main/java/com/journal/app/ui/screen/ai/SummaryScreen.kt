@@ -14,7 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -52,10 +52,10 @@ fun SummaryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("每日总结") },
+                title = { Text("Daily Summary") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -103,7 +103,7 @@ fun SummaryScreen(
                 // Mood
                 if (!summary.mood.isNullOrEmpty()) {
                     Text(
-                        text = "情绪：${summary.mood}",
+                        text = "Mood: ${summary.mood}",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -129,7 +129,7 @@ fun SummaryScreen(
                 // Highlight
                 if (!summary.highlight.isNullOrEmpty()) {
                     Text(
-                        text = "高光时刻",
+                        text = "Highlight",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -147,7 +147,7 @@ fun SummaryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Text("生成社交文案")
+                    Text("Generate social copy")
                 }
             } else {
                 Box(
@@ -157,7 +157,7 @@ fun SummaryScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "素材不足，无法生成总结",
+                        text = "Not enough material to generate a summary",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

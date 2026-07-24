@@ -7,9 +7,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.journal.app.data.local.dao.EntryDao
 import com.journal.app.data.local.dao.JournalDao
+import com.journal.app.data.local.DbSeeder
 import com.journal.app.data.local.entity.TimelineEntryEntity
 import com.journal.app.data.pipeline.GlassesSetupManager
 import com.journal.app.data.pipeline.MaterialIngestion
+import com.journal.app.data.repository.ProfileRepository
 import com.journal.app.data.repository.TimelineRepository
 import com.journal.app.ui.states.HomeUiState
 import com.journal.cxrcore.command.CommandChannel
@@ -34,6 +36,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val application: Application,
     private val timelineRepository: TimelineRepository,
+    private val profileRepository: ProfileRepository,
+    private val dbSeeder: DbSeeder,
     private val sessionManager: SessionManager,
     private val materialIngestion: MaterialIngestion,
     private val commandChannel: CommandChannel,
@@ -45,6 +49,7 @@ class HomeViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "HomeVM"
+        private const val TIMELINE_WINDOW_DAYS = 30L
     }
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -64,7 +69,7 @@ class HomeViewModel @Inject constructor(
         setupManager.init(application)
         observeGlassesState()
         observeRecordingState()
-        loadToday()
+        seedThenObserve()
 
         setupManager.onStatus = { step, msg ->
             Log.i(TAG, "[$step] $msg")
@@ -103,13 +108,8 @@ class HomeViewModel @Inject constructor(
         val today = LocalDate.now()
         viewModelScope.launch {
             timelineRepository.getJournal(today).collect { journal ->
-                Log.i(TAG, "Journal updated: entries=${journal.entries.size} summary=${journal.summary?.take(30)}")
-                journal.entries.forEach { e ->
-                    Log.i(TAG, "  entry: id=${e.id} type=${e.type} imageUrl=${e.imageUrl?.take(60)}")
-                }
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
                         date = today,
                         entries = journal.entries,
                         summaryPreview = journal.summary,
@@ -117,6 +117,57 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    /** Seed sample data on first run, then keep the profile and recent-day timeline live. */
+    private fun seedThenObserve() {
+        viewModelScope.launch {
+            dbSeeder.seedIfEmpty()
+            observeProfile()
+            observeRecentJournals()
+            loadToday()
+        }
+    }
+
+    private fun observeProfile() {
+        viewModelScope.launch {
+            profileRepository.getProfile().collect { profile ->
+                _uiState.update { it.copy(profile = profile) }
+            }
+        }
+    }
+
+    private fun observeRecentJournals() {
+        val today = LocalDate.now()
+        val range = today.minusDays(TIMELINE_WINDOW_DAYS)..today
+        viewModelScope.launch {
+            timelineRepository.getJournalsWithEntries(range).collect { journals ->
+                _uiState.update {
+                    it.copy(isLoading = false, recentJournals = journals)
+                }
+            }
+        }
+    }
+
+    /** Saves a free-text note as a NOTE entry for today (FAB → Text). */
+    fun addTextNote(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val date = LocalDate.now().toString()
+            val entity = TimelineEntryEntity(
+                id = UUID.randomUUID().toString(),
+                date = date,
+                timestamp = now,
+                type = "NOTE",
+                source = "PHONE",
+                noteText = trimmed,
+                createdAt = now,
+            )
+            entryDao.insert(entity)
+            journalDao.refreshEntryCount(date)
         }
     }
 

@@ -40,6 +40,28 @@ class TimelineRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getJournalsWithEntries(range: ClosedRange<LocalDate>): Flow<List<DailyJournal>> {
+        val from = range.start.toString()
+        val to = range.endInclusive.toString()
+        val journalsFlow = journalDao.getJournals(from, to)
+        val entriesFlow = entryDao.getEntriesInRange(from, to)
+
+        return combine(journalsFlow, entriesFlow) { journalEntities, entryEntities ->
+            val entriesByDate = entryEntities
+                .map { it.toDomain() }
+                .groupBy { it.date }
+            // Days that have entries but no summary row still deserve a card.
+            val summarizedDates = journalEntities.map { LocalDate.parse(it.date) }.toSet()
+            val fromSummaries = journalEntities.map { entity ->
+                entity.toDomain(entriesByDate[LocalDate.parse(entity.date)].orEmpty())
+            }
+            val entryOnlyDays = entriesByDate.keys
+                .filter { it !in summarizedDates }
+                .map { date -> DailyJournal(date = date, entries = entriesByDate.getValue(date)) }
+            (fromSummaries + entryOnlyDays).sortedByDescending { it.date }
+        }
+    }
+
     override fun getEntries(date: LocalDate): Flow<List<TimelineEntry>> {
         val dateStr = date.toString()
         return entryDao.getEntries(dateStr).map { entities ->

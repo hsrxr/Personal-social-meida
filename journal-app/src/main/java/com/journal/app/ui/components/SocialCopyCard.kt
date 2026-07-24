@@ -56,7 +56,7 @@ fun SocialCopyCard(
                 IconButton(onClick = onCopy) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "一键复制",
+                        contentDescription = "Copy",
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
@@ -64,14 +64,14 @@ fun SocialCopyCard(
                 IconButton(onClick = onEdit) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "编辑",
+                        contentDescription = "Edit",
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 IconButton(onClick = onRegenerate) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "换一版",
+                        contentDescription = "Regenerate",
                     )
                 }
             }
