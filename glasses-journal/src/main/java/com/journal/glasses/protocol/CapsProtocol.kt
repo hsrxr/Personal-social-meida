@@ -5,9 +5,10 @@ package com.journal.glasses.protocol
  * Duplicated here because glasses-journal is an independent APK with no dependency on cxr-core.
  */
 object CapsProtocol {
-    const val CHANNEL_JOURNAL_EVENT = "journal_event"
-    const val CHANNEL_AUDIO_STREAM = "audio_stream"
-    const val CHANNEL_PHONE_CMD = "phone_cmd"
+    const val CHANNEL_JOURNAL_EVENT = "journal_event"  // Glasses → Phone
+    const val CHANNEL_AUDIO_STREAM = "audio_stream"    // Glasses → Phone
+    const val CHANNEL_PHONE_CMD = "rk_custom_client"   // Phone → Glasses (SDK standard)
+    const val CHANNEL_RETURN_KEY = "rk_custom_key"      // Return channel (SDK convention)
 
     const val FIELD_EVENT_TYPE = "eventType"
     const val FIELD_TIMESTAMP = "timestamp"
@@ -25,6 +26,7 @@ object CapsProtocol {
         const val QUICK_NOTE_START = "quick_note_start"
         const val AGENT_TALK_START = "agent_talk_start"
         const val AGENT_TALK_STOP = "agent_talk_stop"
+        const val TAKE_PHOTO = "take_photo"
         const val PLAY_SUMMARY = "play_summary"
         const val SKIP = "skip"
     }
@@ -33,5 +35,7 @@ object CapsProtocol {
         const val SHOW_STATUS = "show_status"
         const val VIBRATE = "vibrate"
         const val UPDATE_DISPLAY = "update_display"
+        const val START_AUDIO = "start_audio"
+        const val STOP_AUDIO = "stop_audio"
     }
 }

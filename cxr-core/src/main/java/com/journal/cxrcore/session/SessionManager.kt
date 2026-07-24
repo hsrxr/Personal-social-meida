@@ -72,6 +72,7 @@ class SessionManager(
         val link = LinkSessionGate.createCustomAppSession(ctx, token, glassesPackageName)
             ?: return Result.failure(IllegalStateException("Failed to create CXRLink session"))
         cxrLink = link
+        // Do NOT set isSessionReady here; LinkConnectionHub will set it when CXR+BT are both up.
         appContext = ctx
 
         // Observe connection state from Hub to update LinkState

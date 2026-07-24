@@ -12,8 +12,11 @@ object CapsProtocol {
     /** Glasses → Phone: audio stream data frames. */
     const val CHANNEL_AUDIO_STREAM = "audio_stream"
 
-    /** Phone → Glasses: commands (display text, vibrate, etc.). */
-    const val CHANNEL_PHONE_CMD = "phone_cmd"
+    /** Phone → Glasses: commands (display text, vibrate, etc.). SDK standard channel. */
+    const val CHANNEL_PHONE_CMD = "rk_custom_client"
+
+    /** Return channel key (first Caps field convention per SDK). */
+    const val CHANNEL_RETURN_KEY = "rk_custom_key"
 
     // --- Journal event fields (glasses → phone) ---
     const val FIELD_EVENT_TYPE = "eventType"
@@ -44,6 +47,8 @@ object CapsProtocol {
         const val SHOW_STATUS = "show_status"
         const val VIBRATE = "vibrate"
         const val UPDATE_DISPLAY = "update_display"
+        const val START_AUDIO = "start_audio"
+        const val STOP_AUDIO = "stop_audio"
     }
 }
 

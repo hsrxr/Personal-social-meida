@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.journal.cxrcore.command.JournalEvent
 import com.journal.cxrcore.app.JournalApplication
 import com.journal.cxrcore.auth.AuthService
 import com.journal.cxrcore.command.CapsProtocol
@@ -15,7 +16,7 @@ import com.journal.cxrcore.device.DeviceController
 import com.journal.cxrcore.link.LinkConnectionHub
 import com.journal.cxrcore.link.LinkState
 import com.journal.cxrcore.pipeline.audio.AudioChunk
-import com.journal.cxrcore.pipeline.audio.AudioReceiver
+import com.journal.cxrcore.pipeline.audio.AudioPipeline
 import com.journal.cxrcore.pipeline.photo.PhotoCapture
 import com.journal.cxrcore.pipeline.photo.PhotoPipeline
 import com.journal.cxrcore.session.SessionManager
@@ -25,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,7 +43,7 @@ class DebugViewModel : ViewModel() {
 
     private val sessionManager = SessionManager(glassesPackage, glassesActivity)
     private val photoPipeline = PhotoPipeline()
-    private val audioReceiver = AudioReceiver()
+    private val audioPipeline = AudioPipeline()
     private val commandChannel = CommandChannel()
     private val deviceController = DeviceController()
 
@@ -76,13 +78,19 @@ class DebugViewModel : ViewModel() {
         }
         // Observe app installed/opened
         viewModelScope.launch {
-            sessionManager.appInstalled.collect { _state.update { it.copy(appInstalled = it) } }
+            sessionManager.appInstalled.collect { installed ->
+                _state.update { it.copy(appInstalled = installed) }
+            }
         }
         viewModelScope.launch {
-            sessionManager.appOpened.collect { _state.update { it.copy(appOpened = it) } }
+            sessionManager.appOpened.collect { opened ->
+                _state.update { it.copy(appOpened = opened) }
+            }
         }
         viewModelScope.launch {
-            sessionManager.installing.collect { _state.update { it.copy(installing = it) } }
+            sessionManager.installing.collect { inst ->
+                _state.update { it.copy(installing = inst) }
+            }
         }
         // Observe photo flow
         viewModelScope.launch {
@@ -92,7 +100,7 @@ class DebugViewModel : ViewModel() {
         }
         // Observe audio flow
         viewModelScope.launch {
-            audioReceiver.audioChunkFlow.collectLatest { chunk ->
+            audioPipeline.audioChunkFlow.collectLatest { chunk ->
                 onAudioChunkReceived(chunk)
             }
         }
@@ -195,10 +203,9 @@ class DebugViewModel : ViewModel() {
 
     private fun onSessionBuilt() {
         appendLog("🎉 会话构建完成, 初始化能力管道...")
-        // CustomCmdRouter already initialized by SessionManager
         photoPipeline.init()
         commandChannel.init()
-        audioReceiver.init()
+        audioPipeline.init()
     }
 
     fun takePhoto() {
@@ -208,16 +215,19 @@ class DebugViewModel : ViewModel() {
     }
 
     fun startAudio() {
-        // Audio flows from glasses passively via VAD-triggered events.
-        // The AudioReceiver is always subscribed; audioChunkFlow emits when
-        // glasses detects end-of-speech.
         _state.update { it.copy(audioActive = true) }
-        appendLog("🎤 等待眼镜端语音输入 (VAD 自动截断)...")
+        if (!audioPipeline.isActive.value) {
+            audioPipeline.start()
+            appendLog("🎤 startAudioStream 已调用 (mic权限: ${audioPipeline.permissionGranted.value})")
+        } else {
+            appendLog("🎤 已在录音中")
+        }
     }
 
     fun stopAudio() {
         _state.update { it.copy(audioActive = false) }
-        appendLog("⏹ 停止接收")
+        audioPipeline.stop()
+        appendLog("⏹ stopAudioStream 已调用")
     }
 
     fun sendTestCommand() {
@@ -273,10 +283,8 @@ class DebugViewModel : ViewModel() {
 
     private fun findApkPath(): String? {
         val candidates = listOf(
-            File("/sdcard/Download/glasses-journal.apk"),
-            File("/sdcard/DCIM/Rokid/glasses-journal.apk"),
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                ?.resolve("glasses-journal.apk"),
+            File("/data/local/tmp/glasses-journal-debug.apk"),
+            File("/sdcard/Download/glasses-journal-debug.apk"),
         )
         return candidates.firstOrNull { it.exists() && it.canRead() }?.absolutePath
     }

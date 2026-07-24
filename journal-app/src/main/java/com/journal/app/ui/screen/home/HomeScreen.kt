@@ -17,6 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.FiberManualRecord
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
@@ -36,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -67,6 +74,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as android.app.Activity
+
+    // Auto-connect on first composition
+    LaunchedEffect(Unit) {
+        viewModel.startAutoConnect(activity)
+    }
 
     Scaffold(
         topBar = {
@@ -109,6 +122,40 @@ fun HomeScreen(
                 ),
             )
         },
+        floatingActionButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(end = 8.dp, bottom = 8.dp),
+            ) {
+                // Capture photo button
+                SmallFloatingActionButton(
+                    onClick = { viewModel.capturePhoto() },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Icon(
+                        Icons.Default.PhotoCamera,
+                        contentDescription = "拍照",
+                    )
+                }
+                // Record / Stop button
+                FloatingActionButton(
+                    onClick = {
+                        if (uiState.isRecording) viewModel.stopRecording()
+                        else viewModel.startRecording()
+                    },
+                    containerColor = if (uiState.isRecording)
+                        MaterialTheme.colorScheme.errorContainer
+                    else
+                        MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Icon(
+                        if (uiState.isRecording) Icons.Default.Stop
+                        else Icons.Default.FiberManualRecord,
+                        contentDescription = if (uiState.isRecording) "停止录音" else "开始录音",
+                    )
+                }
+            }
+        },
     ) { padding ->
         if (uiState.isLoading) {
             Box(
@@ -130,7 +177,7 @@ fun HomeScreen(
                 // Glass connection status
                 item {
                     GlassStatusBar(
-                        connected = uiState.glassConnected,
+                        linkState = uiState.glassLinkState,
                         batteryLevel = uiState.glassBattery,
                     )
                 }
@@ -279,15 +326,23 @@ fun TimelineEntryCard(
                 val imageUrl = entry.thumbnailUrl ?: entry.imageUrl
                 if (entry.type == EntryType.PHOTO && imageUrl != null) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = "照片",
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(160.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop,
-                    )
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "照片",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
                 }
 
                 // Transcription / note text

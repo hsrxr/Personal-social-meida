@@ -9,7 +9,7 @@ import com.journal.app.data.local.entity.toDomain
 import com.journal.cxrcore.command.CommandChannel
 import com.journal.cxrcore.command.JournalEvent
 import com.journal.cxrcore.pipeline.audio.AudioChunk
-import com.journal.cxrcore.pipeline.audio.AudioReceiver
+import com.journal.cxrcore.pipeline.audio.AudioPipeline
 import com.journal.cxrcore.pipeline.photo.PhotoCapture
 import com.journal.cxrcore.pipeline.photo.PhotoPipeline
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,12 +29,14 @@ import javax.inject.Singleton
 @Singleton
 class MaterialIngestion @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val audioReceiver: AudioReceiver,
+    private val audioPipeline: AudioPipeline,
     private val photoPipeline: PhotoPipeline,
     private val commandChannel: CommandChannel,
     private val entryDao: EntryDao,
     private val journalDao: JournalDao,
     private val mediaUploader: MediaUploader,
+    // AudioPipeline is used for both receiving audio chunks AND triggering start/stop
+    // PhotoPipeline is used for both receiving photo captures AND triggering capture
 ) {
     companion object {
         private const val TAG = "MaterialIngestion"
@@ -61,10 +63,14 @@ class MaterialIngestion @Inject constructor(
 
     private fun collectAudioChunks() {
         scope.launch {
-            audioReceiver.audioChunkFlow
+            audioPipeline.audioChunkFlow
                 .catch { Log.e(TAG, "Audio flow error", it) }
                 .collect { chunk ->
-                    processAudioChunk(chunk)
+                    try {
+                        processAudioChunk(chunk)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "processAudioChunk failed", e)
+                    }
                 }
         }
     }
@@ -74,6 +80,8 @@ class MaterialIngestion @Inject constructor(
         val date = dateFromEpoch(chunk.timestamp)
         val entryId = UUID.randomUUID().toString()
         val localPath = savePcmToFile(entryId, chunk.pcmData)
+
+        Log.i(TAG, "processAudioChunk: id=$entryId date=$date path=$localPath durationMs=${chunk.durationMs} bytes=${chunk.pcmData.size}")
 
         val entity = TimelineEntryEntity(
             id = entryId,
@@ -89,8 +97,11 @@ class MaterialIngestion @Inject constructor(
         val deduped = MaterialNormalizer.deduplicate(entity, entryDao)
         if (!deduped) {
             entryDao.insert(entity)
+            Log.i(TAG, "Audio entry inserted: id=$entryId date=$date")
             journalDao.refreshEntryCount(date)
             mediaUploader.enqueue(entity.toDomain())
+        } else {
+            Log.w(TAG, "Audio entry deduplicated (skipped): id=$entryId")
         }
     }
 
@@ -112,6 +123,13 @@ class MaterialIngestion @Inject constructor(
         val entryId = UUID.randomUUID().toString()
         val localPath = saveJpegToFile(entryId, capture.jpegBytes)
 
+        Log.i(TAG, "processPhoto: id=$entryId date=$date path=$localPath jpegBytes=${capture.jpegBytes.size}")
+
+        if (localPath == null) {
+            Log.e(TAG, "Skipping photo insert: file save failed for id=$entryId")
+            return
+        }
+
         val entity = TimelineEntryEntity(
             id = entryId,
             date = date,
@@ -125,8 +143,11 @@ class MaterialIngestion @Inject constructor(
         val deduped = MaterialNormalizer.deduplicate(entity, entryDao)
         if (!deduped) {
             entryDao.insert(entity)
+            Log.i(TAG, "Photo entry inserted: id=$entryId date=$date path=$localPath")
             journalDao.refreshEntryCount(date)
             mediaUploader.enqueue(entity.toDomain())
+        } else {
+            Log.w(TAG, "Photo entry deduplicated (skipped): id=$entryId")
         }
     }
 
@@ -137,7 +158,11 @@ class MaterialIngestion @Inject constructor(
             commandChannel.inboundFlow
                 .catch { Log.e(TAG, "Key event flow error", it) }
                 .collect { event ->
-                    processKeyEvent(event)
+                    try {
+                        processKeyEvent(event)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "processKeyEvent failed", e)
+                    }
                 }
         }
     }
@@ -147,8 +172,30 @@ class MaterialIngestion @Inject constructor(
         val date = dateFromEpoch(event.timestamp)
 
         val entryType = when (event.eventType) {
+            "take_photo" -> {
+                // Auto-trigger photo capture from glasses camera button
+                Log.i(TAG, "Auto-capturing photo from take_photo event")
+                photoPipeline.capture()
+                "PHOTO"
+            }
             "moment_mark" -> "MOMENT_MARK"
-            "agent_talk_start", "agent_talk_stop" -> "AGENT_DIALOG"
+            "agent_talk_start" -> {
+                // Auto-start audio streaming via SDK API
+                Log.i(TAG, "Auto-starting audio from agent_talk_start")
+                audioPipeline.start()
+                "AGENT_DIALOG"
+            }
+            "agent_talk_stop" -> {
+                // Auto-stop audio streaming
+                Log.i(TAG, "Auto-stopping audio from agent_talk_stop")
+                audioPipeline.stop()
+                "AGENT_DIALOG"
+            }
+            "quick_note_start" -> {
+                Log.i(TAG, "Auto-starting audio from quick_note_start")
+                audioPipeline.start()
+                "AUDIO"
+            }
             else -> {
                 Log.d(TAG, "Unhandled event type: ${event.eventType}")
                 return

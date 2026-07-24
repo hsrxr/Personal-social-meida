@@ -47,16 +47,29 @@ class CommandChannel {
      * Sends a command to the glasses app.
      */
     fun sendToGlasses(channel: String, builder: Caps.() -> Unit) {
-        val link = readyLink() ?: return
+        val link = readyLink()
+        if (link == null) {
+            Log.w(TAG, "sendToGlasses: link not ready, dropping channel=$channel")
+            return
+        }
         val caps = Caps().apply(builder)
-        link.sendCustomCmd(channel, caps)
+        Log.d(TAG, "sendToGlasses: channel=$channel, fields=${caps.size()}")
+        runCatching {
+            link.sendCustomCmd(channel, caps)
+        }.onSuccess {
+            Log.d(TAG, "sendToGlasses: OK channel=$channel")
+        }.onFailure { e ->
+            Log.e(TAG, "sendToGlasses: FAILED channel=$channel", e)
+        }
     }
 
     /**
      * Convenience: sends a phone_cmd to the glasses display.
+     * Follows Sample convention: first Caps field is the return channel key.
      */
     fun sendPhoneCmd(cmd: String, text: String = "") {
         sendToGlasses(CapsProtocol.CHANNEL_PHONE_CMD) {
+            write(CapsProtocol.CHANNEL_RETURN_KEY)  // First field: return channel (SDK convention)
             write(cmd)
             if (text.isNotEmpty()) write(text)
         }

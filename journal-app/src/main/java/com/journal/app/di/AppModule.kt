@@ -15,11 +15,11 @@ import com.journal.app.data.remote.SyncManager
 import com.journal.app.data.repository.AiService
 import com.journal.app.data.repository.MatchRepository
 import com.journal.app.data.repository.TimelineRepository
+import com.journal.app.data.repository.TimelineRepositoryImpl
 import com.journal.app.data.repository.mock.MockAiService
 import com.journal.app.data.repository.mock.MockMatchRepository
-import com.journal.app.data.repository.mock.MockTimelineRepository
 import com.journal.cxrcore.command.CommandChannel
-import com.journal.cxrcore.pipeline.audio.AudioReceiver
+import com.journal.cxrcore.pipeline.audio.AudioPipeline
 import com.journal.cxrcore.pipeline.photo.PhotoPipeline
 import com.journal.cxrcore.session.SessionManager
 import dagger.Module
@@ -56,7 +56,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAudioReceiver(): AudioReceiver = AudioReceiver()
+    fun provideAudioPipeline(): AudioPipeline = AudioPipeline()
 
     @Provides
     @Singleton
@@ -148,14 +148,14 @@ object AppModule {
     @Singleton
     fun provideMaterialIngestion(
         @ApplicationContext context: Context,
-        audioReceiver: AudioReceiver,
+        audioPipeline: AudioPipeline,
         photoPipeline: PhotoPipeline,
         commandChannel: CommandChannel,
         entryDao: EntryDao,
         journalDao: JournalDao,
         mediaUploader: MediaUploader,
     ): MaterialIngestion = MaterialIngestion(
-        context, audioReceiver, photoPipeline, commandChannel,
+        context, audioPipeline, photoPipeline, commandChannel,
         entryDao, journalDao, mediaUploader,
     )
 
@@ -165,7 +165,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTimelineRepository(impl: MockTimelineRepository): TimelineRepository = impl
+    fun provideTimelineRepository(impl: TimelineRepositoryImpl): TimelineRepository = impl
 
     @Provides
     @Singleton

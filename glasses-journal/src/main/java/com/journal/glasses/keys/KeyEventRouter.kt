@@ -44,8 +44,11 @@ class KeyReceiver(
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action ?: return
-        val keyType = KeyType.entries.find { it.action == action } ?: return
-        Log.d(TAG, "onReceive: $keyType")
+        val keyType = KeyType.entries.find { it.action == action } ?: run {
+            Log.w(TAG, "onReceive: unknown action=$action")
+            return
+        }
+        Log.i(TAG, "onReceive: $keyType")
         listener.onKeyEvent(keyType)
         abortBroadcast()
     }
@@ -66,7 +69,7 @@ data class KeyAction(
  * Key → Action mapping per the product spec:
  * | Key             | KeyType                     | Business Action           |
  * |-----------------|-----------------------------|---------------------------|
- * | Click temple    | CLICK                       | Mark moment ⭐            |
+ * | Click temple    | CLICK                       | Take photo 📷           |
  * | Double-click    | DOUBLE_CLICK                | Quick voice note          |
  * | Long press      | LONG_PRESS                  | Start/stop agent talk     |
  * | Swipe forward   | ACTION_TWO_FINGER_SWIPE_FWD | Play today's summary TTS  |
@@ -75,7 +78,7 @@ data class KeyAction(
 fun KeyType.toAction(): KeyAction? {
     val now = System.currentTimeMillis()
     return when (this) {
-        KeyType.CLICK -> KeyAction(CapsProtocol.EventType.MOMENT_MARK, now)
+        KeyType.CLICK -> KeyAction(CapsProtocol.EventType.TAKE_PHOTO, now)
         KeyType.DOUBLE_CLICK -> KeyAction(CapsProtocol.EventType.QUICK_NOTE_START, now)
         KeyType.LONG_PRESS -> KeyAction(CapsProtocol.EventType.AGENT_TALK_START, now)
         KeyType.ACTION_TWO_FINGER_SWIPE_FORWARD -> KeyAction(CapsProtocol.EventType.PLAY_SUMMARY, now)

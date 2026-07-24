@@ -2,17 +2,16 @@ package com.journal.glasses
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.IntentFilter
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.rokid.cxr.CXRServiceBridge
 import com.rokid.cxr.Caps
-import com.journal.glasses.audio.GlassesAudioCapture
 import com.journal.glasses.keys.KeyAction
 import com.journal.glasses.keys.KeyReceiver
 import com.journal.glasses.keys.KeyType
 import com.journal.glasses.keys.toAction
-
 import com.journal.glasses.protocol.CapsProtocol
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +22,9 @@ import kotlinx.coroutines.flow.asStateFlow
  *
  * Responsibilities:
  * - Initialize CXRServiceBridge: setStatusListener + subscribe to phone commands.
- * - Handle key events from [KeyReceiver] → map to actions → send to phone.
- * - Manage GlassesAudioCapture for VAD-gated audio recording.
+ * - Handle key events → map to journal events → send to phone.
+ * - Phone triggers actual audio streaming via SDK's startAudioStream() API;
+ *   this app only sends key events, not audio data.
  * - Expose UI state for the minimal Compose StatusScreen.
  */
 class MainViewModel : ViewModel() {
@@ -33,13 +33,8 @@ class MainViewModel : ViewModel() {
         private const val TAG = "MainViewModel"
     }
 
-    // CXR-S bridge
     private val cxrBridge = CXRServiceBridge()
 
-    // Audio capture
-    private val audioCapture = GlassesAudioCapture(cxrBridge)
-
-    // Key receiver
     lateinit var keyReceiver: KeyReceiver
         private set
 
@@ -52,9 +47,6 @@ class MainViewModel : ViewModel() {
 
     private val _isRecording = MutableStateFlow(false)
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
-
-    // Track talk state for LONG_PRESS toggle
-    private var isTalkActive = false
 
     init {
         initCxrBridge()
@@ -69,51 +61,59 @@ class MainViewModel : ViewModel() {
                 Log.i(TAG, "CXR bridge connected")
                 _isConnected.value = true
             }
-
             override fun onDisconnected() {
                 Log.w(TAG, "CXR bridge disconnected")
                 _isConnected.value = false
             }
-
             override fun onConnecting(p0: String?, p1: String?, p2: Int) {
                 Log.d(TAG, "CXR bridge connecting")
             }
-
             override fun onARTCStatus(p0: Float, p1: Boolean) {}
             override fun onRokidAccountChanged(p0: String?) {}
             override fun onAudioNoise(p0: Float) {}
         })
 
         // Subscribe to phone commands
-        cxrBridge.subscribe(CapsProtocol.CHANNEL_PHONE_CMD, phoneCmdCallback)
+        val ret = cxrBridge.subscribe(CapsProtocol.CHANNEL_PHONE_CMD, phoneCmdCallback)
+        Log.i(TAG, "subscribe(${CapsProtocol.CHANNEL_PHONE_CMD}) = $ret (0=success, -1=err, -2=dup)")
+
+        // Confirm subscription: send subscribe_ok event to phone
+        if (ret == 0) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                cxrBridge.sendMessage(CapsProtocol.CHANNEL_JOURNAL_EVENT, Caps().apply {
+                    write("subscribe_ok")
+                    writeInt64(System.currentTimeMillis())
+                    write("channel=${CapsProtocol.CHANNEL_PHONE_CMD}")
+                })
+                Log.i(TAG, "Sent subscribe_ok confirmation to phone")
+            }, 1000)
+        }
     }
 
     private val phoneCmdCallback = object : CXRServiceBridge.MsgCallback {
         override fun onReceive(name: String?, args: Caps?, value: ByteArray?) {
-            if (name != CapsProtocol.CHANNEL_PHONE_CMD || args == null) return
+            Log.i(TAG, "phoneCmdCallback: name=$name, argsSize=${args?.size()}, valueSize=${value?.size}")
+            if (args == null || args.size() == 0) {
+                Log.w(TAG, "phoneCmdCallback: empty args")
+                return
+            }
             handlePhoneCmd(args)
         }
     }
 
-    /**
-     * Parses phone_cmd messages. Expected fields:
-     * [0] cmd (String): "show_status" | "vibrate" | "update_display"
-     * [1] text (String, optional): display text.
-     */
     private fun handlePhoneCmd(args: Caps) {
-        if (args.size() < 1) return
-        val cmd = args.at(0).string ?: return
-        val text = if (args.size() > 1) args.at(1).string ?: "" else ""
+        val offset = if (args.size() >= 2 && args.at(0).string == CapsProtocol.CHANNEL_RETURN_KEY) 1 else 0
+        if (args.size() <= offset) return
+        val cmd = args.at(offset).string ?: return
+        val text = if (args.size() > offset + 1) args.at(offset + 1).string ?: "" else ""
 
         when (cmd) {
-            CapsProtocol.PhoneCmd.SHOW_STATUS -> {
-                _displayText.value = text
-            }
+            CapsProtocol.PhoneCmd.SHOW_STATUS,
             CapsProtocol.PhoneCmd.UPDATE_DISPLAY -> {
                 _displayText.value = text
+                Log.i(TAG, "display text updated: '$text'")
             }
             CapsProtocol.PhoneCmd.VIBRATE -> {
-                // Vibration not implemented in this minimal version
                 Log.d(TAG, "vibrate requested (not implemented)")
             }
         }
@@ -125,87 +125,80 @@ class MainViewModel : ViewModel() {
         keyReceiver = KeyReceiver { keyType -> onKeyEvent(keyType) }
     }
 
-    /**
-     * Registers the key receiver with the Activity.
-     * Call from Activity.onCreate.
-     */
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun registerKeyReceiver(activity: Activity) {
-        activity.registerReceiver(keyReceiver, IntentFilter().apply {
+        val filter = IntentFilter().apply {
             KeyType.entries.forEach { addAction(it.action) }
             priority = 100
-        })
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            activity.registerReceiver(keyReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            activity.registerReceiver(keyReceiver, filter)
+        }
     }
 
-    /**
-     * Unregisters the key receiver from the Activity.
-     * Call from Activity.onDestroy.
-     */
     fun unregisterKeyReceiver(activity: Activity) {
         runCatching { activity.unregisterReceiver(keyReceiver) }
     }
 
     private fun onKeyEvent(keyType: KeyType) {
-        Log.d(TAG, "onKeyEvent: $keyType")
-
+        Log.i(TAG, "onKeyEvent: $keyType")
         when (keyType) {
             KeyType.CLICK -> {
-                // Mark moment: send event to phone
                 val action = keyType.toAction() ?: return
                 sendJournalEvent(action)
-                _displayText.value = "⭐ Moment marked"
+                _displayText.value = "📷 Photo"
             }
-
             KeyType.DOUBLE_CLICK -> {
-                // Quick voice note: start audio capture
                 val action = keyType.toAction() ?: return
                 sendJournalEvent(action)
-                startTalk()
+                _displayText.value = "🎤 Quick note"
             }
-
             KeyType.LONG_PRESS -> {
-                // Toggle agent talk
-                if (isTalkActive) {
-                    stopTalk()
-                    sendJournalEvent(KeyAction(CapsProtocol.EventType.AGENT_TALK_STOP, System.currentTimeMillis()))
+                val now = System.currentTimeMillis()
+                if (_isRecording.value) {
+                    _isRecording.value = false
+                    _displayText.value = ""
+                    sendJournalEvent(KeyAction(CapsProtocol.EventType.AGENT_TALK_STOP, now))
                 } else {
-                    sendJournalEvent(KeyAction(CapsProtocol.EventType.AGENT_TALK_START, System.currentTimeMillis()))
-                    startTalk()
+                    _isRecording.value = true
+                    _displayText.value = "🎤 Agent talk"
+                    sendJournalEvent(KeyAction(CapsProtocol.EventType.AGENT_TALK_START, now))
                 }
             }
-
             KeyType.ACTION_TWO_FINGER_SWIPE_FORWARD,
             KeyType.ACTION_TWO_FINGER_SWIPE_BACK -> {
                 val action = keyType.toAction() ?: return
                 sendJournalEvent(action)
             }
-
-            else -> { /* unmapped key, ignore */ }
+            else -> {}
         }
     }
 
-    // ── Audio ──
+    // ── KeyEvent path (from Activity.onKeyDown) ──
 
-    private fun startTalk() {
-        isTalkActive = true
-        audioCapture.startRecording()
-        _isRecording.value = true
-        _displayText.value = "🎤 Listening..."
-    }
-
-    private fun stopTalk() {
-        isTalkActive = false
-        audioCapture.stopRecording()
-        _isRecording.value = false
-        _displayText.value = ""
+    fun handleKeyCode(keyCode: Int, repeatCount: Int = 0) {
+        Log.i(TAG, "handleKeyCode: keyCode=$keyCode repeat=$repeatCount")
+        when (keyCode) {
+            android.view.KeyEvent.KEYCODE_CAMERA -> {
+                sendJournalEvent(KeyAction("take_photo", System.currentTimeMillis()))
+                _displayText.value = "📷 Photo"
+            }
+            android.view.KeyEvent.KEYCODE_BACK -> {
+                onKeyEvent(KeyType.CLICK)
+            }
+            android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> onKeyEvent(KeyType.LONG_PRESS)
+            android.view.KeyEvent.KEYCODE_FORWARD -> {
+                onKeyEvent(KeyType.DOUBLE_CLICK)
+                _displayText.value = "🎤 Quick note"
+            }
+            else -> Log.i(TAG, "handleKeyCode: unmapped keyCode=$keyCode")
+        }
     }
 
     // ── Messaging ──
 
-    /**
-     * Sends a journal event Caps message to the phone.
-     * Fields: [0] eventType (String), [1] timestamp (Long), [2] metadata (String, optional).
-     */
     private fun sendJournalEvent(action: KeyAction) {
         try {
             val caps = Caps().apply {
@@ -220,11 +213,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // ── Lifecycle ──
-
     override fun onCleared() {
         super.onCleared()
-        audioCapture.release()
-        if (isTalkActive) stopTalk()
     }
 }

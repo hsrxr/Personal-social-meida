@@ -1,6 +1,8 @@
 package com.journal.glasses
 
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +23,10 @@ import com.journal.glasses.display.StatusScreen
  * - onDestroy: unregister key receiver.
  */
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
     private val viewModel by viewModels<MainViewModel>()
 
@@ -49,5 +55,22 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         viewModel.unregisterKeyReceiver(this)
         super.onDestroy()
+    }
+
+    /**
+     * Intercept all hardware key events from the glasses.
+     *
+     * This catches camera button, temple button, and touchpad events.
+     * Returns true to consume the event and prevent system default handling.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        Log.i(TAG, "onKeyDown: keyCode=$keyCode repeat=${event?.repeatCount}")
+        viewModel.handleKeyCode(keyCode, event?.repeatCount ?: 0)
+        return true
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        Log.d("MainActivity", "onKeyUp: keyCode=$keyCode")
+        return super.onKeyUp(keyCode, event)
     }
 }

@@ -28,7 +28,7 @@ class TimelineRepositoryImpl @Inject constructor(
         val entriesFlow = getEntries(date)
 
         return combine(journalFlow, entriesFlow) { entity, entries ->
-            entity?.toDomain(entries) ?: DailyJournal(date = date)
+            entity?.toDomain(entries) ?: DailyJournal(date = date, entries = entries)
         }
     }
 

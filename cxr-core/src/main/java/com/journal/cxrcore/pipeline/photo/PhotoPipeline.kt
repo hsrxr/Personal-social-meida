@@ -54,10 +54,18 @@ class PhotoPipeline {
      * Call once after session is built.
      */
     fun init() {
-        if (initialized) return
-        val link = readyLink() ?: return
+        if (initialized) {
+            Log.i(TAG, "init: already initialized")
+            return
+        }
+        val link = readyLink()
+        if (link == null) {
+            Log.w(TAG, "init: link not ready, skipping")
+            return
+        }
         link.setCXRImageCbk(imageCallback)
         initialized = true
+        Log.i(TAG, "init: done")
     }
 
     /**
@@ -71,7 +79,12 @@ class PhotoPipeline {
         height: Int = DEFAULT_HEIGHT,
         quality: Int = DEFAULT_QUALITY,
     ) {
-        val link = readyLink() ?: return
+        val link = readyLink()
+        if (link == null) {
+            Log.w(TAG, "capture: link not ready, cannot take photo")
+            return
+        }
+        Log.i(TAG, "capture: calling takePhoto(width=$width, height=$height, quality=$quality)")
         link.takePhoto(width, height, quality)
     }
 

@@ -34,8 +34,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
-    // CXR-L SDK (phone side)
-    implementation("com.rokid.cxr:client-l:1.0.4")
+    // CXR-L SDK (phone side) — api so consumers can access AuthResult, etc.
+    api("com.rokid.cxr:client-l:1.0.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
