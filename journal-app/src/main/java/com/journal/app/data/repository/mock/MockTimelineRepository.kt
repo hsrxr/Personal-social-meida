@@ -41,6 +41,12 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
         }
     }
 
+    override suspend fun getEntry(entryId: String): TimelineEntry? =
+        journals.value
+            .asSequence()
+            .flatMap { it.entries.asSequence() }
+            .firstOrNull { it.id == entryId }
+
     override suspend fun addEntry(entry: TimelineEntry): String {
         delay(300) // simulate storage
         val id = entry.id.ifBlank { UUID.randomUUID().toString() }

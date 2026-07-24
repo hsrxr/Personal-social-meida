@@ -52,6 +52,9 @@ class TimelineRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getEntry(entryId: String): TimelineEntry? =
+        entryDao.getById(entryId)?.toDomain()
+
     override suspend fun addEntry(entry: TimelineEntry): String {
         val entity = entry.toEntity()
         entryDao.insert(entity)
