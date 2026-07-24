@@ -111,24 +111,21 @@ fun AnnotateScreen(
                 }
             }
 
-            // Mood selector
+            // Note
             Text(
-                text = "情绪",
+                text = "备注",
                 style = MaterialTheme.typography.titleSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                moods.forEach { mood ->
-                    FilterChip(
-                        selected = selectedMood == mood,
-                        onClick = { selectedMood = mood },
-                        label = { Text(mood) },
-                    )
-                }
-            }
+            OutlinedTextField(
+                value = noteText,
+                onValueChange = { noteText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                shape = RoundedCornerShape(12.dp),
+                placeholder = { Text("添加一点备注...") },
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -153,21 +150,24 @@ fun AnnotateScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Note
+            // Mood selector
             Text(
-                text = "备注",
+                text = "情绪",
                 style = MaterialTheme.typography.titleSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = noteText,
-                onValueChange = { noteText = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("添加一点备注...") },
-            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                moods.forEach { mood ->
+                    FilterChip(
+                        selected = selectedMood == mood,
+                        onClick = { selectedMood = mood },
+                        label = { Text(mood) },
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
