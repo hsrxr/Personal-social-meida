@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
@@ -43,6 +44,7 @@ fun FeedPostCard(
     post: FeedPost,
     onClick: () -> Unit,
     onSayHi: () -> Unit,
+    onAvatarClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -59,6 +61,7 @@ fun FeedPostCard(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
+                        .clickable(enabled = onAvatarClick != null) { onAvatarClick?.invoke() }
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
                 ) {

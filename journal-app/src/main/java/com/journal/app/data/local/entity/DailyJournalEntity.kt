@@ -10,5 +10,6 @@ data class DailyJournalEntity(
     val keywords: String? = null,
     val mood: String? = null,
     val entryCount: Int = 0,
+    val visibility: String = "PRIVATE",
     val lastModified: Long = 0,
 )

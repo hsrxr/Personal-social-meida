@@ -1,6 +1,7 @@
 package com.journal.app.ui.screen.journal
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ import com.journal.app.util.DateFormatter
 @Composable
 fun FullJournalScreen(
     onBack: () -> Unit = {},
+    onEditEntry: (String) -> Unit = {},
     viewModel: FullJournalViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -59,7 +61,7 @@ fun FullJournalScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Full Journal", fontWeight = FontWeight.SemiBold) },
+                title = { Text("Full Journey", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -102,7 +104,7 @@ fun FullJournalScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         items(days, key = { it.date.toString() }) { journal ->
-                            JournalRailRow(journal = journal)
+                            JournalRailRow(journal = journal, onEditEntry = onEditEntry)
                         }
                     }
                 }
@@ -111,10 +113,10 @@ fun FullJournalScreen(
     }
 }
 
-/** A dated timeline row: left rail (dot + short date) + the day's content card. */
 @Composable
-private fun JournalRailRow(journal: DailyJournal) {
+private fun JournalRailRow(journal: DailyJournal, onEditEntry: (String) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth()) {
+        // Date rail
         Column(
             modifier = Modifier.width(56.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -134,17 +136,19 @@ private fun JournalRailRow(journal: DailyJournal) {
             )
         }
         Spacer(Modifier.width(8.dp))
-        JournalDayContent(journal = journal, modifier = Modifier.weight(1f))
+        JournalDayContent(journal = journal, onEditEntry = onEditEntry, modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun JournalDayContent(journal: DailyJournal, modifier: Modifier = Modifier) {
-    val photoUrls = journal.entries
-        .filter { it.type == EntryType.PHOTO }
-        .mapNotNull { it.imageUrl }
-    val audioEntry = journal.entries.firstOrNull { it.type == EntryType.AUDIO }
-    val texts = journal.entries.mapNotNull { it.noteText ?: it.transcription }
+private fun JournalDayContent(
+    journal: DailyJournal,
+    onEditEntry: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val photoEntries = journal.entries.filter { it.type == EntryType.PHOTO }
+    val audioEntries = journal.entries.filter { it.type == EntryType.AUDIO }
+    val noteEntries = journal.entries.filter { it.type == EntryType.NOTE }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -155,21 +159,63 @@ private fun JournalDayContent(journal: DailyJournal, modifier: Modifier = Modifi
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // Summary
             journal.summary?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             }
-            if (audioEntry != null) {
-                AudioPlayerBar(
-                    durationMs = (audioEntry.durationMs ?: 0).toLong(),
-                    audioUrl = audioEntry.imageUrl,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+
+            // Photos — clickable to edit
+            photoEntries.forEach { entry ->
+                val url = entry.imageUrl
+                if (url != null) {
+                    Box(modifier = Modifier.fillMaxWidth().clickable { onEditEntry(entry.id) }) {
+                        coil3.compose.AsyncImage(
+                            model = url,
+                            contentDescription = "Photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                        )
+                    }
+                }
             }
-            texts.forEach { text ->
-                HashtaggedText(text = text)
+
+            // Audio — clickable to edit
+            audioEntries.forEach { entry ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable { onEditEntry(entry.id) },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AudioPlayerBar(
+                        durationMs = (entry.durationMs ?: 0).toLong(),
+                        audioUrl = entry.imageUrl,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                entry.transcription?.let {
+                    HashtaggedText(text = it)
+                }
             }
-            if (photoUrls.isNotEmpty()) {
-                PhotoRow(imageUrls = photoUrls)
+
+            // Notes — clickable to edit
+            noteEntries.forEach { entry ->
+                entry.noteText?.let { text ->
+                    Column(modifier = Modifier.fillMaxWidth().clickable { onEditEntry(entry.id) }) {
+                        HashtaggedText(text = text)
+                    }
+                }
+            }
+
+            // Collect non-content entries (MOMENT_MARK, AGENT_DIALOG) as plain text
+            val otherTexts = journal.entries
+                .filter { it.type != EntryType.PHOTO && it.type != EntryType.AUDIO && it.type != EntryType.NOTE }
+                .mapNotNull { it.noteText ?: it.transcription }
+            if (otherTexts.isNotEmpty()) {
+                otherTexts.forEach { text ->
+                    HashtaggedText(text = text)
+                }
             }
         }
     }

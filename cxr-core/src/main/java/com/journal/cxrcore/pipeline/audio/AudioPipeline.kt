@@ -30,7 +30,7 @@ class AudioPipeline {
         private const val VAD_TIMEOUT_MS = 1500L
     }
 
-    private val _audioChunkFlow = MutableSharedFlow<AudioChunk>(extraBufferCapacity = 2)
+    private val _audioChunkFlow = MutableSharedFlow<AudioChunk>(extraBufferCapacity = 4)
     val audioChunkFlow: SharedFlow<AudioChunk> = _audioChunkFlow.asSharedFlow()
 
     private val _isActive = MutableStateFlow(false)
@@ -152,14 +152,18 @@ class AudioPipeline {
 
             if (pcmBytes.isNotEmpty()) {
                 val durationMs = (pcmBytes.size * 1000L / (SAMPLE_RATE * 2)).toInt()
-                _audioChunkFlow.tryEmit(
+                val emitted = _audioChunkFlow.tryEmit(
                     AudioChunk(
                         pcmData = pcmBytes,
                         timestamp = startMs,
                         durationMs = durationMs,
                     )
                 )
-                Log.d(TAG, "Emitted AudioChunk: ${pcmBytes.size} bytes, ${durationMs}ms")
+                if (!emitted) {
+                    Log.e(TAG, "stop: FAILED to emit AudioChunk — buffer full or no subscriber. Audio LOST (${pcmBytes.size} bytes)")
+                } else {
+                    Log.d(TAG, "Emitted AudioChunk: ${pcmBytes.size} bytes, ${durationMs}ms")
+                }
             } else {
                 Log.w(TAG, "stop: no audio data received")
             }

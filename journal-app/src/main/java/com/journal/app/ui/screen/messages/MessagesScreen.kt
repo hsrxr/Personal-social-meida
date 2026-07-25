@@ -1,6 +1,7 @@
 package com.journal.app.ui.screen.messages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,6 +48,7 @@ import com.journal.app.util.DateFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesScreen(
+    onConversationClick: (String, String) -> Unit = { _, _ -> },
     viewModel: MessagesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -89,7 +91,12 @@ fun MessagesScreen(
                 } else {
                     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
                         items(conversations, key = { it.id }) { conversation ->
-                            ConversationRow(conversation = conversation)
+                            ConversationRow(
+                                conversation = conversation,
+                                onClick = {
+                                    onConversationClick(conversation.id, conversation.contactName)
+                                },
+                            )
                         }
                     }
                 }
@@ -99,9 +106,9 @@ fun MessagesScreen(
 }
 
 @Composable
-private fun ConversationRow(conversation: Conversation) {
+private fun ConversationRow(conversation: Conversation, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

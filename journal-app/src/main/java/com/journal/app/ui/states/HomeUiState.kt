@@ -3,6 +3,7 @@ package com.journal.app.ui.states
 import com.journal.app.data.model.DailyJournal
 import com.journal.app.data.model.TimelineEntry
 import com.journal.app.data.model.UserProfile
+import com.journal.app.data.model.Visibility
 import com.journal.cxrcore.link.LinkState
 import java.time.LocalDate
 
@@ -25,5 +26,15 @@ data class HomeUiState(
     val connectionStatus: String = "",
     // Recording state
     val isRecording: Boolean = false,
-)
+    // Visibility filter
+    val visibilityFilter: Visibility? = null, // null = show all
+) {
+    /** Journals filtered by visibility. */
+    val filteredJournals: List<DailyJournal>
+        get() = when (visibilityFilter) {
+            null -> recentJournals
+            Visibility.PUBLIC -> recentJournals.filter { it.visibility == Visibility.PUBLIC }
+            Visibility.PRIVATE -> recentJournals.filter { it.visibility == Visibility.PRIVATE }
+        }
+}
 

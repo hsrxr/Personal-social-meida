@@ -26,7 +26,7 @@ class PhotoPipeline {
         private const val DEFAULT_QUALITY = 85
     }
 
-    private val _photoFlow = MutableSharedFlow<PhotoCapture>(extraBufferCapacity = 1)
+    private val _photoFlow = MutableSharedFlow<PhotoCapture>(extraBufferCapacity = 4)
     val photoFlow: SharedFlow<PhotoCapture> = _photoFlow.asSharedFlow()
 
     private val imageCallback = object : IImageStreamCbk {
@@ -39,7 +39,12 @@ class PhotoPipeline {
                 jpegBytes = data,
                 timestamp = System.currentTimeMillis(),
             )
-            _photoFlow.tryEmit(capture)
+            val emitted = _photoFlow.tryEmit(capture)
+            if (!emitted) {
+                Log.e(TAG, "onImageReceived: FAILED to emit photo — buffer full or no subscriber. Photo LOST (${data.size} bytes)")
+            } else {
+                Log.i(TAG, "onImageReceived: photo emitted (${data.size} bytes)")
+            }
         }
 
         override fun onImageError(code: Int, msg: String?) {

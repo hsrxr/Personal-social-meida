@@ -35,6 +35,13 @@ class MockTimelineRepository @Inject constructor() : TimelineRepository {
         }
     }
 
+    override fun getJournalsWithEntries(range: ClosedRange<LocalDate>): Flow<List<DailyJournal>> {
+        return journals.map { list ->
+            list.filter { it.date in range && it.entries.isNotEmpty() }
+                .sortedByDescending { it.date }
+        }
+    }
+
     override fun getEntries(date: LocalDate): Flow<List<TimelineEntry>> {
         return journals.map { list ->
             list.find { it.date == date }?.entries ?: emptyList()

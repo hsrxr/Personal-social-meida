@@ -3,6 +3,8 @@ package com.journal.app.data.repository.mock
 import com.journal.app.data.model.SocialCopy
 import com.journal.app.data.model.SocialPlatform
 import com.journal.app.data.model.Summary
+import com.journal.app.data.model.TimelineEntry
+import com.journal.app.data.model.Visibility
 import com.journal.app.data.repository.AiService
 import kotlinx.coroutines.delay
 import javax.inject.Inject
@@ -11,8 +13,8 @@ import javax.inject.Singleton
 @Singleton
 class MockAiService @Inject constructor() : AiService {
 
-    override suspend fun generateSummary(date: String): Result<Summary> {
-        delay(1500) // simulate AI latency
+    override suspend fun generateSummary(date: String, materials: List<TimelineEntry>): Result<Summary> {
+        delay(1500)
         return Result.success(
             Summary(
                 keywords = listOf("coffee", "wangjing", "osmanthus", "calm", "work"),
@@ -58,5 +60,10 @@ class MockAiService @Inject constructor() : AiService {
                 text = "A taste of autumn 🍂 Osmanthus latte + osmanthus breeze — autumn's little ritual~ #daily #osmanthus",
             )
         )
+    }
+
+    override suspend fun publishSummary(date: String, summary: Summary, visibility: Visibility): Result<Boolean> {
+        delay(500)
+        return Result.success(true)
     }
 }

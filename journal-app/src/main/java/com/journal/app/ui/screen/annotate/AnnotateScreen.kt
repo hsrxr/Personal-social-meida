@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,9 +33,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,8 +49,6 @@ fun AnnotateScreen(
     viewModel: AnnotateViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedMood by remember { mutableStateOf<String?>(null) }
-    var noteText by remember { mutableStateOf("") }
     val moods = listOf("Happy", "Calm", "Irritated", "Excited", "Tired", "Neutral")
     val suggestedTags = listOf("coffee", "osmanthus", "wangjing", "cafe-hopping", "weekday")
 
@@ -68,7 +62,10 @@ fun AnnotateScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onSaved) {
+                    IconButton(onClick = {
+                        viewModel.save()
+                        onSaved()
+                    }) {
                         Icon(Icons.Default.Check, contentDescription = "Save")
                     }
                 },
@@ -118,8 +115,8 @@ fun AnnotateScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = noteText,
-                onValueChange = { noteText = it },
+                value = uiState.noteText,
+                onValueChange = viewModel::onNoteTextChange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
@@ -162,8 +159,8 @@ fun AnnotateScreen(
             ) {
                 moods.forEach { mood ->
                     FilterChip(
-                        selected = selectedMood == mood,
-                        onClick = { selectedMood = mood },
+                        selected = uiState.selectedMood == mood,
+                        onClick = { viewModel.onMoodSelected(mood) },
                         label = { Text(mood) },
                     )
                 }
@@ -172,7 +169,10 @@ fun AnnotateScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = onSaved,
+                onClick = {
+                    viewModel.save()
+                    onSaved()
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {

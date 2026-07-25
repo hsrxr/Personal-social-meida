@@ -1,6 +1,7 @@
 package com.journal.app.data.local.entity
 
 import com.journal.app.data.model.CommonDetail
+import com.journal.app.data.model.Visibility
 import com.journal.app.data.model.DailyJournal
 import com.journal.app.data.model.EntryType
 import com.journal.app.data.model.MatchCard
@@ -54,6 +55,7 @@ fun DailyJournalEntity.toDomain(entries: List<TimelineEntry> = emptyList()): Dai
     val keywordList: List<String> = keywords?.let {
         runCatching { gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type) }.getOrNull()
     } ?: emptyList()
+    val parsedVisibility = runCatching { Visibility.valueOf(visibility) }.getOrDefault(Visibility.PRIVATE)
     return DailyJournal(
         date = LocalDate.parse(date),
         entries = entries,
@@ -61,6 +63,7 @@ fun DailyJournalEntity.toDomain(entries: List<TimelineEntry> = emptyList()): Dai
         keywords = keywordList,
         mood = mood,
         entryCount = entryCount,
+        visibility = parsedVisibility,
     )
 }
 
@@ -70,6 +73,7 @@ fun DailyJournal.toEntity(): DailyJournalEntity = DailyJournalEntity(
     keywords = gson.toJson(keywords),
     mood = mood,
     entryCount = entryCount,
+    visibility = visibility.name,
     lastModified = System.currentTimeMillis(),
 )
 

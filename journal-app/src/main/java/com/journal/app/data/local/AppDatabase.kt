@@ -23,7 +23,7 @@ import com.journal.app.data.local.entity.UserEntity
         MatchEntity::class,
         UserEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

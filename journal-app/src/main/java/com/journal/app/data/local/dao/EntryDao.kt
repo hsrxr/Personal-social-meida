@@ -40,6 +40,9 @@ interface EntryDao {
     @Query("DELETE FROM timeline_entries WHERE id = :id")
     suspend fun delete(id: String)
 
+    @Query("UPDATE timeline_entries SET noteText = :noteText, isStarred = :isStarred WHERE id = :id")
+    suspend fun update(id: String, noteText: String, isStarred: Boolean)
+
     @Query("SELECT EXISTS(SELECT 1 FROM timeline_entries WHERE timestamp = :ts AND type = :type AND source = :source LIMIT 1)")
     suspend fun existsByTimestamp(ts: Long, type: String, source: String): Boolean
 }

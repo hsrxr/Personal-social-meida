@@ -7,4 +7,5 @@ data class DiscoverUiState(
     val posts: List<FeedPost> = emptyList(),
     val selectedPost: FeedPost? = null,
     val sayHiConfirmation: String? = null,
+    val navigateToConversationId: String? = null,
 )

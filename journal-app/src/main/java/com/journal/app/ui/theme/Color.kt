@@ -2,7 +2,36 @@ package com.journal.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Primary palette: Rokid-inspired green tech aesthetic ──
+// ── Warm sunset palette: young / warm / loving ──
+// Primary: warm coral pink
+val CoralPrimary = Color(0xFFFF6B6B)
+val CoralPressed = Color(0xFFE05555)
+val CoralContainer = Color(0xFFFFE8E5)       // light peach container for chips, tags
+val CoralOnContainer = Color(0xFF8B3A3A)     // dark warm red for text on container
+
+// Secondary: golden amber for warmth
+val AmberPrimary = Color(0xFFFF9F43)
+val AmberContainer = Color(0xFFFFF0E0)
+val AmberOnContainer = Color(0xFF7B4A1E)
+
+// Tertiary: soft rose pink for accent / sent messages
+val RosePrimary = Color(0xFFF78DA7)
+val RoseContainer = Color(0xFFFFE4EC)
+val RoseOnContainer = Color(0xFF7B2D42)
+
+// ── Warm neutrals ──
+val CreamBackground = Color(0xFFFAF5F0)       // screen background: warm cream
+val WarmSurface = Color(0xFFFFFFFF)           // cards, top bar: pure white
+val WarmSurfaceVariant = Color(0xFFF3EDE7)    // avatar fills, waveform bg: warm light gray
+val WarmOutline = Color(0xFFE8E0D8)           // dividers, borders: warm beige
+val WarmOnNeutral = Color(0xFF3D3028)         // primary text: dark warm brown
+val WarmOnNeutralVariant = Color(0xFF8B7E74)  // secondary text: muted warm gray
+
+// ── Semantic ──
+val ErrorRedLight = Color(0xFFBA1A1A)
+val ErrorContainerLight = Color(0xFFFFDAD6)
+
+// ── Legacy greens (keep for dark theme / glasses status) ──
 val Green10 = Color(0xFF00210C)
 val Green20 = Color(0xFF003917)
 val Green30 = Color(0xFF005221)
@@ -10,41 +39,15 @@ val Green40 = Color(0xFF006D2C)
 val Green80 = Color(0xFF75D78A)
 val Green90 = Color(0xFF91F4A4)
 
-// ── Neutral dark palette ──
+// ── Dark theme (unchanged) ──
 val Gray10 = Color(0xFF1A1C1E)
-val Gray20 = Color(0xFF2F3033)
-val Gray30 = Color(0xFF454649)
 val Gray80 = Color(0xFFC5C6C9)
 val Gray90 = Color(0xFFE1E2E5)
-val Gray95 = Color(0xFFEFF0F3)
-val Gray99 = Color(0xFFFBFDFF)
-
-// ── Accent / mood colors ──
 val Amber40 = Color(0xFF8F6C00)
 val Amber80 = Color(0xFFF3CD48)
-val Rose40 = Color(0xFF8C0032)
-val Rose80 = Color(0xFFFFB0C2)
 val Sky40 = Color(0xFF005F8A)
 val Sky80 = Color(0xFF90CEF5)
-val Lavender40 = Color(0xFF5C3E9A)
-val Lavender80 = Color(0xFFCBBEFA)
-
-// ── Semantic ──
 val ErrorRed = Color(0xFFFFB4AB)
 val ErrorRedDark = Color(0xFF690005)
 val SurfaceDark = Color(0xFF111318)
 val SurfaceVariantDark = Color(0xFF242629)
-
-// ── Echoes blue palette (light theme — matches UI mockup) ──
-val Blue40 = Color(0xFF1B6FF3)  // primary: buttons, active nav, links, match %
-val Blue30 = Color(0xFF0B4FBF)  // pressed / on-container text
-val Blue90 = Color(0xFFDDE8FD)  // light container: chips, waveform track, nav indicator
-val Blue95 = Color(0xFFEEF3FE)  // subtle blue tint
-
-// ── Echoes light neutrals ──
-val NeutralBackground = Color(0xFFF2F3F5)     // screen background
-val NeutralSurface = Color(0xFFFFFFFF)        // cards, top bar, bottom bar
-val NeutralSurfaceVariant = Color(0xFFEEF1F4) // avatars, inactive fills, waveform bg
-val NeutralOutline = Color(0xFFE5E7EB)        // dividers, borders
-val OnNeutral = Color(0xFF16181C)             // primary text
-val OnNeutralVariant = Color(0xFF6B7280)      // secondary text

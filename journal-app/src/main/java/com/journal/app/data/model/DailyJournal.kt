@@ -9,4 +9,5 @@ data class DailyJournal(
     val keywords: List<String> = emptyList(),
     val mood: String? = null,
     val entryCount: Int = 0,
+    val visibility: Visibility = Visibility.PRIVATE,
 )

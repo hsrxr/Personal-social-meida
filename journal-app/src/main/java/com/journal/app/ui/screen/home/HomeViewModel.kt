@@ -175,6 +175,10 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { timelineRepository.toggleStar(entryId) }
     }
 
+    fun setVisibilityFilter(visibility: com.journal.app.data.model.Visibility?) {
+        _uiState.update { it.copy(visibilityFilter = visibility) }
+    }
+
     // ── Phone-side camera capture (uses system camera via ActivityResultLauncher in HomeScreen) ──
 
     /** Creates a temp file for the system camera to write into. */

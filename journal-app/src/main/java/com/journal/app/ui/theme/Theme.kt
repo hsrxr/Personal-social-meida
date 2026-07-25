@@ -7,11 +7,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// ═══ Dark theme (unchanged) ═══
 private val DarkColorScheme = darkColorScheme(
     primary = Green80,
     onPrimary = Green20,
@@ -31,32 +31,45 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = Gray90,
 )
 
+// ═══ Light theme: warm sunset palette — young / warm / loving ═══
 private val LightColorScheme = lightColorScheme(
-    primary = Blue40,
-    onPrimary = Color.White,
-    primaryContainer = Blue90,
-    onPrimaryContainer = Blue30,
-    secondary = Blue40,
-    onSecondary = Color.White,
-    secondaryContainer = Blue90,
-    onSecondaryContainer = Blue30,
-    tertiary = Sky40,
-    onTertiary = Color.White,
-    error = ErrorRedDark,
-    onError = Color.White,
-    surface = NeutralSurface,
-    onSurface = OnNeutral,
-    surfaceVariant = NeutralSurfaceVariant,
-    onSurfaceVariant = OnNeutralVariant,
-    background = NeutralBackground,
-    onBackground = OnNeutral,
-    outline = NeutralOutline,
-    outlineVariant = NeutralOutline,
+    // Primary: warm coral pink for buttons, active nav, links, match badges
+    primary = CoralPrimary,
+    onPrimary = WarmSurface,
+    primaryContainer = CoralContainer,
+    onPrimaryContainer = CoralOnContainer,
+
+    // Secondary: golden amber for accents
+    secondary = AmberPrimary,
+    onSecondary = WarmSurface,
+    secondaryContainer = AmberContainer,
+    onSecondaryContainer = AmberOnContainer,
+
+    // Tertiary: soft rose for message bubbles / special highlights
+    tertiary = RosePrimary,
+    onTertiary = WarmSurface,
+    tertiaryContainer = RoseContainer,
+    onTertiaryContainer = RoseOnContainer,
+
+    // Error
+    error = ErrorRedLight,
+    onError = WarmSurface,
+    errorContainer = ErrorContainerLight,
+
+    // Surfaces
+    surface = WarmSurface,
+    onSurface = WarmOnNeutral,
+    surfaceVariant = WarmSurfaceVariant,
+    onSurfaceVariant = WarmOnNeutralVariant,
+    background = CreamBackground,
+    onBackground = WarmOnNeutral,
+    outline = WarmOutline,
+    outlineVariant = WarmOutline,
 )
 
 @Composable
 fun JournalTheme(
-    darkTheme: Boolean = false, // default light: matches the Echoes phone-app mockup
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

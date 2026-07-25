@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -83,7 +82,13 @@ fun AudioPlayerBar(
                         } else if (audioUrl != null) {
                             val mp = MediaPlayer()
                             runCatching {
-                                mp.setDataSource(audioUrl)
+                                // Handle local file:// paths
+                                val dataSource = if (audioUrl.startsWith("file://")) {
+                                    audioUrl.removePrefix("file://")
+                                } else {
+                                    audioUrl
+                                }
+                                mp.setDataSource(dataSource)
                                 mp.setOnCompletionListener { stop() }
                                 mp.prepare()
                                 mp.start()

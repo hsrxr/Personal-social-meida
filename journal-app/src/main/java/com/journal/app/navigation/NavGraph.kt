@@ -21,10 +21,13 @@ import com.journal.app.ui.screen.discover.DiscoverScreen
 import com.journal.app.ui.screen.home.CalendarScreen
 import com.journal.app.ui.screen.home.HomeScreen
 import com.journal.app.ui.screen.journal.FullJournalScreen
+import com.journal.app.ui.screen.journal.JournalDayScreen
 import com.journal.app.ui.screen.match.IceBreakScreen
 import com.journal.app.ui.screen.match.MatchScreen
+import com.journal.app.ui.screen.messages.ConversationScreen
 import com.journal.app.ui.screen.messages.MessagesScreen
 import com.journal.app.ui.screen.search.FindSimilarScreen
+import com.journal.app.ui.screen.profile.UserProfileScreen
 import com.journal.app.ui.screen.settings.SettingsScreen
 
 @Composable
@@ -60,7 +63,7 @@ fun NavGraph() {
             composable(Screen.Home.route) {
                 HomeScreen(
                     onDayClick = { dateStr ->
-                        navController.navigate(Screen.Calendar.route)
+                        navController.navigate(Screen.JournalDay.createRoute(dateStr))
                     },
                     onViewFullJournalClick = {
                         navController.navigate(Screen.FullJournal.route)
@@ -82,16 +85,49 @@ fun NavGraph() {
                     onSearchClick = {
                         navController.navigate(Screen.FindSimilar.route)
                     },
+                    onAvatarClick = { userId ->
+                        navController.navigate(Screen.UserProfile.createRoute(userId))
+                    },
+                    onConversationClick = { convId ->
+                        // Extract contact name from convId
+                        val name = convId.removePrefix("conv-user-").replaceFirstChar { it.uppercase() }
+                        navController.navigate(
+                            Screen.Conversation.createRoute(convId, name)
+                        )
+                    },
                 )
             }
 
             composable(Screen.Messages.route) {
-                MessagesScreen()
+                MessagesScreen(
+                    onConversationClick = { convId, contactName ->
+                        navController.navigate(
+                            Screen.Conversation.createRoute(convId, contactName)
+                        )
+                    },
+                )
+            }
+
+            composable(
+                route = Screen.JournalDay.route,
+                arguments = listOf(navArgument("date") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val date = backStackEntry.arguments?.getString("date") ?: ""
+                JournalDayScreen(
+                    date = date,
+                    onBack = { navController.popBackStack() },
+                    onEditEntry = { entryId ->
+                        navController.navigate(Screen.Annotate.createRoute(entryId))
+                    },
+                )
             }
 
             composable(Screen.FullJournal.route) {
                 FullJournalScreen(
                     onBack = { navController.popBackStack() },
+                    onEditEntry = { entryId ->
+                        navController.navigate(Screen.Annotate.createRoute(entryId))
+                    },
                 )
             }
 
@@ -169,6 +205,27 @@ fun NavGraph() {
 
             composable(Screen.Profile.route) {
                 // ProfileScreen placeholder — will be implemented in Sprint 5
+            }
+
+            composable(
+                route = Screen.UserProfile.route,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                UserProfileScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(
+                route = Screen.Conversation.route,
+                arguments = listOf(
+                    navArgument("conversationId") { type = NavType.StringType },
+                    navArgument("contactName") { type = NavType.StringType },
+                ),
+            ) {
+                ConversationScreen(
+                    onBack = { navController.popBackStack() },
+                )
             }
         }
     }

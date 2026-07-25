@@ -18,4 +18,8 @@ data class FeedPost(
     val matchPercent: Int,
     val matchReason: String,
     val timestamp: Long,
+    /** The current user's post text that matched this feed post. */
+    val matchedMyPostText: String? = null,
+    /** ID for navigating to this user's profile. */
+    val authorId: String = "",
 )

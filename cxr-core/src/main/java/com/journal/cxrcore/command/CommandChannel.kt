@@ -24,7 +24,7 @@ class CommandChannel {
         private const val TAG = "CommandChannel"
     }
 
-    private val _inboundFlow = MutableSharedFlow<JournalEvent>(extraBufferCapacity = 4)
+    private val _inboundFlow = MutableSharedFlow<JournalEvent>(extraBufferCapacity = 8)
     val inboundFlow: SharedFlow<JournalEvent> = _inboundFlow.asSharedFlow()
 
     private var subscribed = false
@@ -36,8 +36,15 @@ class CommandChannel {
     fun init() {
         if (subscribed) return
         CustomCmdRouter.subscribe(CapsProtocol.CHANNEL_JOURNAL_EVENT) { payload ->
-            val event = parseJournalEvent(payload) ?: return@subscribe
-            _inboundFlow.tryEmit(event)
+            val event = parseJournalEvent(payload)
+            if (event == null) {
+                Log.w(TAG, "init: failed to parse journal event from ${payload.size} bytes")
+                return@subscribe
+            }
+            val emitted = _inboundFlow.tryEmit(event)
+            if (!emitted) {
+                Log.e(TAG, "init: FAILED to emit event — buffer full or no subscriber. Event LOST: type=${event.eventType}")
+            }
         }
         subscribed = true
         Log.d(TAG, "CommandChannel subscribed to ${CapsProtocol.CHANNEL_JOURNAL_EVENT}")

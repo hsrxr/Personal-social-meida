@@ -171,49 +171,50 @@ class MaterialIngestion @Inject constructor(
         val now = System.currentTimeMillis()
         val date = dateFromEpoch(event.timestamp)
 
-        val entryType = when (event.eventType) {
+        when (event.eventType) {
             "take_photo" -> {
-                // Auto-trigger photo capture from glasses camera button
+                // Trigger async photo capture; the actual JPEG entry is saved in processPhoto()
                 Log.i(TAG, "Auto-capturing photo from take_photo event")
                 photoPipeline.capture()
-                "PHOTO"
+                return
             }
-            "moment_mark" -> "MOMENT_MARK"
+            "moment_mark" -> {
+                // Standalone event — save directly
+                val entity = TimelineEntryEntity(
+                    id = UUID.randomUUID().toString(),
+                    date = date,
+                    timestamp = event.timestamp,
+                    type = "MOMENT_MARK",
+                    source = "GLASSES",
+                    noteText = event.metadata.takeIf { it.isNotEmpty() },
+                    createdAt = now,
+                )
+                entryDao.insert(entity)
+                journalDao.refreshEntryCount(date)
+            }
             "agent_talk_start" -> {
-                // Auto-start audio streaming via SDK API
+                // Trigger async audio recording; the PCM entry is saved in processAudioChunk()
                 Log.i(TAG, "Auto-starting audio from agent_talk_start")
                 audioPipeline.start(enableVad = false)
-                "AGENT_DIALOG"
+                return
             }
             "agent_talk_stop" -> {
-                // Auto-stop audio streaming
+                // Stop audio recording; processAudioChunk will save the PCM entry
                 Log.i(TAG, "Auto-stopping audio from agent_talk_stop")
                 audioPipeline.stop()
-                "AGENT_DIALOG"
+                return
             }
             "quick_note_start" -> {
+                // Trigger VAD-based audio recording
                 Log.i(TAG, "Auto-starting audio from quick_note_start")
                 audioPipeline.start(enableVad = true)
-                "AUDIO"
+                return
             }
             else -> {
                 Log.d(TAG, "Unhandled event type: ${event.eventType}")
                 return
             }
         }
-
-        val entity = TimelineEntryEntity(
-            id = UUID.randomUUID().toString(),
-            date = date,
-            timestamp = event.timestamp,
-            type = entryType,
-            source = "GLASSES",
-            noteText = event.metadata.takeIf { it.isNotEmpty() },
-            createdAt = now,
-        )
-
-        entryDao.insert(entity)
-        journalDao.refreshEntryCount(date)
     }
 
     // ── File I/O helpers ──

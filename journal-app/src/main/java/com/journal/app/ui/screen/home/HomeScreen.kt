@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -40,6 +43,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +69,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.journal.app.data.model.DailyJournal
+import com.journal.app.data.model.Visibility
 import com.journal.app.ui.components.SpeedDialAction
 import com.journal.app.ui.components.SpeedDialFab
 import com.journal.app.ui.states.HomeUiState
@@ -136,7 +141,7 @@ fun HomeScreen(
         SpeedDialAction("Manual Edit", Icons.Default.Edit) { onManualEditClick() },
     )
 
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars).background(MaterialTheme.colorScheme.background)) {
         if (uiState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
@@ -159,13 +164,33 @@ fun HomeScreen(
                         Text("View Full Journal", fontWeight = FontWeight.SemiBold)
                     }
                 }
-                items(uiState.recentJournals, key = { it.date.toString() }) { journal ->
+                // Visibility filter chips
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = uiState.visibilityFilter == null,
+                            onClick = { viewModel.setVisibilityFilter(null) },
+                            label = { Text("All") },
+                        )
+                        FilterChip(
+                            selected = uiState.visibilityFilter == Visibility.PUBLIC,
+                            onClick = { viewModel.setVisibilityFilter(Visibility.PUBLIC) },
+                            label = { Text("Public") },
+                        )
+                        FilterChip(
+                            selected = uiState.visibilityFilter == Visibility.PRIVATE,
+                            onClick = { viewModel.setVisibilityFilter(Visibility.PRIVATE) },
+                            label = { Text("Private") },
+                        )
+                    }
+                }
+                items(uiState.filteredJournals, key = { it.date.toString() }) { journal ->
                     DailyJournalCard(
                         journal = journal,
                         onClick = { onDayClick(journal.date.toString()) },
                     )
                 }
-                if (uiState.recentJournals.isEmpty()) {
+                if (uiState.filteredJournals.isEmpty()) {
                     item { EmptyTimeline() }
                 }
                 item { Spacer(Modifier.height(96.dp)) }

@@ -25,10 +25,20 @@ sealed class Screen(val route: String) {
     }
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
+    data object UserProfile : Screen("user_profile/{userId}") {
+        fun createRoute(userId: String) = "user_profile/$userId"
+    }
 
     // ── Echoes bottom-nav destinations ──
     data object Discover : Screen("discover")
     data object Messages : Screen("messages")
     data object FullJournal : Screen("full_journal")
     data object FindSimilar : Screen("find_similar")
+    data object JournalDay : Screen("journal_day/{date}") {
+        fun createRoute(date: String) = "journal_day/$date"
+    }
+    data object Conversation : Screen("conversation/{conversationId}/{contactName}") {
+        fun createRoute(conversationId: String, contactName: String) =
+            "conversation/$conversationId/$contactName"
+    }
 }
